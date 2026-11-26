@@ -1,0 +1,3047 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>Lectron</title>
+<style>
+  :root {
+    --void: #07090e;
+    --surface: #0e131e;
+    --surface2: #151c2c;
+    --hair: #232f45;
+    --hair-bright: #3c4f72;
+    --ink: #f4f7fc;
+    --ink2: #b8c4da;
+    --mute: #7c8ca8;
+    --cyan: #00e5ff;
+    --cyan-glow: rgba(0, 229, 255, 0.45);
+    --emerald: #00e58b;
+    --amber: #ffb020;
+    --orange: #ff6b1a;
+    --pink: #ff2e7e;
+    --pink-glow: rgba(255, 46, 126, 0.55);
+    --purple: #a78bfa;
+    --mode-accent: var(--cyan);
+  }
+  body[data-mode="overdrive"] {
+    --mode-accent: var(--pink);
+  }
+  * {
+    box-sizing: border-box;
+    -webkit-tap-highlight-color: transparent;
+    user-select: none;
+  }
+  html, body {
+    margin: 0;
+    padding: 0;
+    width: 100%;
+    height: 100%;
+    background: var(--void);
+    color: var(--ink);
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Hiragino Sans", "Noto Sans JP", sans-serif;
+    overflow: hidden;
+    font-variant-numeric: tabular-nums;
+  }
+  #app {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    align-items: stretch;
+    justify-content: space-between;
+    width: 100%;
+    max-width: 480px;
+    height: 100dvh;
+    margin: 0 auto;
+    padding: 6px 8px 8px;
+    gap: 5px;
+    background: var(--void);
+  }
+  @media (min-width: 560px) {
+    body { background: #040508; }
+    #app {
+      border-left: 1px solid #182030;
+      border-right: 1px solid #182030;
+      padding: 8px 12px 10px;
+    }
+  }
+
+  /* ===== Top Bar ===== */
+  .top-bar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 6px;
+    flex: 0 0 auto;
+  }
+  .mode-switch {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    background: var(--surface);
+    border: 1px solid var(--hair-bright);
+    padding: 2px;
+    gap: 2px;
+    clip-path: polygon(6px 0, 100% 0, 100% calc(100% - 6px), calc(100% - 6px) 100%, 0 100%, 0 6px);
+  }
+  .mode-btn {
+    border: none;
+    background: transparent;
+    color: var(--mute);
+    font-size: 11px;
+    font-weight: 800;
+    letter-spacing: 0.05em;
+    padding: 5px 10px;
+    cursor: pointer;
+    transition: background 0.15s, color 0.15s, box-shadow 0.15s;
+    white-space: nowrap;
+  }
+  .mode-btn.active-tac {
+    background: var(--cyan);
+    color: #05080f;
+    box-shadow: 0 0 12px var(--cyan-glow);
+  }
+  .mode-btn.active-ovd {
+    background: linear-gradient(135deg, #ff2e7e, #ff6b1a);
+    color: #fff;
+    box-shadow: 0 0 14px var(--pink-glow);
+  }
+  .top-actions {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+  }
+  .coin-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    background: var(--surface);
+    border: 1px solid var(--hair-bright);
+    padding: 4px 8px;
+    font-size: 12px;
+    font-weight: 900;
+    color: var(--amber);
+    transition: transform 0.15s, border-color 0.15s;
+  }
+  .coin-badge.pulse {
+    transform: scale(1.14);
+    border-color: var(--amber);
+    box-shadow: 0 0 10px rgba(255, 176, 32, 0.45);
+  }
+  .icon-btn {
+    background: var(--surface);
+    color: var(--ink2);
+    border: 1px solid var(--hair-bright);
+    width: 30px;
+    height: 28px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 13px;
+    cursor: pointer;
+    transition: border-color 0.15s, color 0.15s;
+  }
+  .icon-btn:active { transform: scale(0.94); }
+
+  /* ===== Dual-Chassis HUD ===== */
+  .hud-chassis {
+    flex: 0 0 auto;
+    background: linear-gradient(180deg, #131a29 0%, #0c101a 100%);
+    border: 1px solid var(--hair-bright);
+    border-top: 2px solid var(--mode-accent);
+    padding: 6px 9px;
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+    position: relative;
+    transition: border-color 0.2s, box-shadow 0.2s;
+  }
+  body[data-mode="overdrive"] .hud-chassis {
+    background: linear-gradient(180deg, #1e101c 0%, #0e0912 100%);
+    border-color: #5a2240;
+    border-top-color: var(--pink);
+    box-shadow: 0 0 18px rgba(255, 46, 126, 0.16);
+  }
+  .hud-top-line {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+  }
+  .stage-cluster {
+    display: flex;
+    align-items: baseline;
+    gap: 6px;
+  }
+  .stage-code {
+    font-size: 14px;
+    font-weight: 900;
+    letter-spacing: 0.05em;
+    color: var(--ink);
+  }
+  .stage-meta {
+    font-size: 10px;
+    font-weight: 700;
+    color: var(--mute);
+  }
+  .hud-right-meta {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+  .score-readout {
+    font-size: 12px;
+    font-weight: 800;
+    color: var(--ink2);
+  }
+  .score-readout strong { color: var(--ink); font-size: 13px; }
+  .tag-chip {
+    font-size: 10px;
+    font-weight: 800;
+    padding: 1px 6px;
+    border: 1px solid rgba(0, 229, 255, 0.5);
+    color: var(--cyan);
+    background: rgba(0, 229, 255, 0.12);
+    white-space: nowrap;
+  }
+  .tag-chip.boss {
+    border-color: var(--pink);
+    color: #ff8ab5;
+    background: rgba(255, 46, 126, 0.18);
+  }
+
+  /* TACTICAL HUD */
+  .tac-gauge-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+  }
+  .mag-wrap {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+  }
+  .mag-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    font-size: 10px;
+    font-weight: 800;
+    color: var(--mute);
+    letter-spacing: 0.05em;
+  }
+  .mag-head .mag-val { color: var(--emerald); font-size: 11px; }
+  .mag-head .mag-val.low { color: var(--pink); }
+  .mag-cells {
+    display: grid;
+    grid-template-columns: repeat(15, 1fr);
+    gap: 2px;
+    height: 10px;
+  }
+  .mag-cell {
+    background: #141c2c;
+    border: 1px solid #24324c;
+    transition: background 0.15s, box-shadow 0.15s;
+  }
+  .mag-cell.filled {
+    background: var(--cyan);
+    border-color: #7df3ff;
+    box-shadow: 0 0 6px rgba(0, 229, 255, 0.5);
+  }
+  .mag-cell.filled.low {
+    background: var(--pink);
+    border-color: #ff85b3;
+    box-shadow: 0 0 6px rgba(255, 46, 126, 0.6);
+  }
+  .chain-pip-box {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    gap: 3px;
+    padding-left: 8px;
+    border-left: 1px solid var(--hair);
+    flex: 0 0 auto;
+  }
+  .chain-pip-lbl { font-size: 9px; font-weight: 800; color: var(--mute); }
+  .chain-pips { display: flex; align-items: center; gap: 5px; height: 10px; }
+  .c-pip {
+    width: 9px;
+    height: 9px;
+    border: 1px solid var(--hair-bright);
+    background: #101624;
+    transform: rotate(45deg);
+    transition: 0.12s;
+  }
+  .c-pip.lit {
+    background: var(--emerald);
+    border-color: #9effd3;
+    box-shadow: 0 0 8px rgba(0, 229, 139, 0.7);
+    transform: rotate(45deg) scale(1.15);
+  }
+
+  /* OVERDRIVE HUD */
+  .ovd-gauge-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+  }
+  .ovd-left {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    min-width: 0;
+  }
+  .ovd-score-line {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 6px;
+  }
+  .ovd-score-now { font-size: 16px; font-weight: 900; color: var(--ink); line-height: 1; }
+  .ovd-score-tgt { font-size: 11px; font-weight: 700; color: var(--mute); }
+  .pressure-track {
+    width: 100%;
+    height: 8px;
+    background: #190e1c;
+    border: 1px solid #4a203e;
+    position: relative;
+    overflow: hidden;
+  }
+  .pressure-fill {
+    height: 100%;
+    width: 0%;
+    background: linear-gradient(90deg, #ff2e7e, #ff7a2b);
+    box-shadow: 0 0 10px rgba(255, 46, 126, 0.65);
+    transition: width 0.18s ease-out;
+  }
+  .pressure-fill.cleared {
+    background: linear-gradient(90deg, #00e58b, #00e5ff);
+    box-shadow: 0 0 10px rgba(0, 229, 139, 0.7);
+  }
+  .ovd-taps-row {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    font-size: 10px;
+    font-weight: 800;
+    color: var(--mute);
+  }
+  .ovd-tap-pip {
+    width: 12px;
+    height: 6px;
+    background: #231928;
+    border: 1px solid #4d2c46;
+  }
+  .ovd-tap-pip.lit {
+    background: var(--amber);
+    border-color: #ffe08a;
+    box-shadow: 0 0 6px rgba(255, 176, 32, 0.6);
+  }
+  .ovd-tap-pip.lit.urgent {
+    background: var(--pink);
+    border-color: #ff99c2;
+    box-shadow: 0 0 8px var(--pink-glow);
+  }
+  .ovd-taps-row.onetry-cover {
+    background: rgba(255, 46, 126, 0.18);
+    border: 1px solid var(--pink);
+    padding: 1px 5px;
+    color: #ff99c2;
+  }
+  .mult-core {
+    flex: 0 0 auto;
+    min-width: 68px;
+    padding: 4px 8px;
+    background: #1b0d1e;
+    border: 1.5px solid var(--pink);
+    box-shadow: 0 0 14px rgba(255, 46, 126, 0.35);
+    text-align: center;
+    clip-path: polygon(6px 0, 100% 0, 100% calc(100% - 6px), calc(100% - 6px) 100%, 0 100%, 0 6px);
+    transition: transform 0.12s, border-color 0.18s;
+  }
+  .mult-core.bump { transform: scale(1.14); }
+  .mult-val { font-size: 17px; font-weight: 900; line-height: 1.05; color: var(--pink); }
+  .mult-sub { font-size: 9px; font-weight: 800; color: var(--ink2); letter-spacing: 0.05em; }
+
+  /* Status Strip + Excitation Legend */
+  .status-strip {
+    flex: 0 0 auto;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 6px;
+    min-height: 20px;
+    padding: 2px 6px;
+    font-size: 10px;
+    font-weight: 700;
+    color: var(--mute);
+    border-left: 2px solid var(--hair-bright);
+    transition: 0.15s;
+  }
+  .status-strip.aim-mode {
+    border-left-color: var(--amber);
+    background: rgba(255, 176, 32, 0.16);
+    color: var(--amber);
+    padding: 3px 8px;
+    cursor: pointer;
+  }
+  .status-strip.aim-boom {
+    border-left-color: var(--pink);
+    background: rgba(255, 46, 126, 0.18);
+    color: #ff99c2;
+  }
+  .excite-legend {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    font-size: 9px;
+    font-weight: 800;
+    color: var(--ink2);
+  }
+  .leg-cloud {
+    display: inline-block;
+    border-radius: 50%;
+    background: radial-gradient(circle, #ffffff 0%, currentColor 42%, transparent 74%);
+  }
+
+  /* ===== Heavy Industrial Accelerator Chamber Bezel ===== */
+  .board-stage {
+    position: relative;
+    flex: 1 1 auto;
+    min-height: 220px;
+    width: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  .board-chassis {
+    position: relative;
+    padding: 13px 7px;
+    background: linear-gradient(180deg, #212b3f 0%, #111827 50%, #1d2638 100%);
+    border: 1.5px solid #485b7c;
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.16), 0 0 28px rgba(0, 229, 255, 0.14);
+    clip-path: polygon(12px 0, calc(100% - 12px) 0, 100% 12px, 100% calc(100% - 12px), calc(100% - 12px) 100%, 12px 100%, 0 calc(100% - 12px), 0 12px);
+    transition: border-color 0.2s, box-shadow 0.2s, background 0.25s;
+  }
+  .board-chassis::before,
+  .board-chassis::after {
+    content: "";
+    position: absolute;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 34%;
+    height: 4px;
+    background: var(--cyan);
+    box-shadow: 0 0 12px var(--cyan), 0 0 4px #ffffff;
+    pointer-events: none;
+    transition: background 0.2s, box-shadow 0.2s, width 0.2s;
+  }
+  .board-chassis::before { top: 4px; }
+  .board-chassis::after { bottom: 4px; }
+
+  body[data-mode="overdrive"] .board-chassis {
+    background: linear-gradient(180deg, #350d26 0%, #180714 50%, #3a1220 100%);
+    border-color: var(--wave-col, #ff2e7e);
+    box-shadow: inset 0 0 18px rgba(255, 46, 126, 0.35), 0 0 32px rgba(255, 46, 126, 0.32);
+  }
+  body[data-mode="overdrive"] .board-chassis::before,
+  body[data-mode="overdrive"] .board-chassis::after {
+    width: 52%;
+    background: linear-gradient(90deg, #ff2e7e, #ffb020, #ff2e7e);
+    box-shadow: 0 0 14px var(--wave-col, #ff2e7e), 0 0 5px #ffffff;
+  }
+  .board-chassis.aim-swap {
+    border-color: var(--amber) !important;
+    box-shadow: 0 0 24px rgba(255, 176, 32, 0.45) !important;
+  }
+  .board-chassis.aim-boom {
+    border-color: var(--pink) !important;
+    box-shadow: 0 0 24px rgba(255, 46, 126, 0.55) !important;
+  }
+  .board-chassis.mirror-on {
+    border-color: var(--cyan) !important;
+    box-shadow: 0 0 26px rgba(0, 229, 255, 0.55) !important;
+  }
+  .board-chassis.pulse-beat {
+    box-shadow: 0 0 34px rgba(255, 255, 255, 0.42), inset 0 0 16px rgba(255, 255, 255, 0.25) !important;
+  }
+  canvas#board {
+    display: block;
+    background: #060910;
+    border: 1px solid #0b0f18;
+    touch-action: none;
+    cursor: pointer;
+  }
+
+  /* Cut-in Banner */
+  #cutin {
+    position: absolute;
+    pointer-events: none;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%) scale(0.84);
+    opacity: 0;
+    background: rgba(8, 10, 16, 0.94);
+    border: 2px solid var(--amber);
+    color: var(--amber);
+    font-weight: 900;
+    font-size: 15px;
+    letter-spacing: 0.04em;
+    padding: 8px 18px;
+    text-align: center;
+    white-space: nowrap;
+    clip-path: polygon(8px 0, 100% 0, calc(100% - 8px) 100%, 0 100%);
+    box-shadow: 0 0 24px rgba(255, 176, 32, 0.4);
+    transition: opacity 0.16s, transform 0.16s;
+    z-index: 15;
+  }
+  #cutin.show { opacity: 1; transform: translate(-50%, -50%) scale(1); }
+
+  /* Toast */
+  #toast {
+    position: fixed;
+    top: 14px;
+    left: 50%;
+    transform: translateX(-50%) translateY(-16px);
+    opacity: 0;
+    pointer-events: none;
+    background: #121724;
+    border: 1px solid var(--amber);
+    color: var(--ink);
+    font-size: 12px;
+    font-weight: 800;
+    padding: 7px 14px;
+    z-index: 120;
+    transition: opacity 0.18s, transform 0.18s;
+    white-space: nowrap;
+  }
+  #toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+
+  /* ===== Thumb Deck (Dynamic Tools + Active Relic Skills) ===== */
+  .thumb-deck {
+    flex: 0 0 auto;
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+  }
+  .tool-row {
+    display: flex;
+    align-items: stretch;
+    flex-wrap: wrap;
+    gap: 5px;
+    min-height: 32px;
+  }
+  .tool-btn {
+    flex: 1 1 auto;
+    min-width: 84px;
+    background: linear-gradient(180deg, #161d2e 0%, #0e131e 100%);
+    border: 1px solid var(--hair-bright);
+    color: var(--ink);
+    padding: 6px 8px;
+    font-size: 11px;
+    font-weight: 800;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 4px;
+    min-height: 32px;
+    transition: 0.15s;
+    white-space: nowrap;
+  }
+  .tool-btn:active:not(:disabled) { transform: scale(0.97); }
+  .tool-btn:disabled { opacity: 0.42; cursor: default; color: var(--mute); }
+  .tool-btn.armed-swap {
+    border-color: var(--amber);
+    background: rgba(255, 176, 32, 0.2);
+    color: var(--amber);
+    box-shadow: 0 0 10px rgba(255, 176, 32, 0.38);
+  }
+  .tool-btn.armed-boom {
+    border-color: var(--pink);
+    background: rgba(255, 46, 126, 0.22);
+    color: #ff99c2;
+    box-shadow: 0 0 10px rgba(255, 46, 126, 0.42);
+  }
+  .tool-btn.skill-btn {
+    border-color: rgba(0, 229, 255, 0.55);
+    color: var(--cyan);
+  }
+  .tool-empty-note {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 10px;
+    font-weight: 700;
+    color: var(--mute);
+    background: rgba(14, 19, 30, 0.65);
+    border: 1px dashed var(--hair);
+    min-height: 32px;
+  }
+
+  /* Relic Breach Bar */
+  .relic-deck {
+    background: linear-gradient(180deg, #141a28 0%, #0c1019 100%);
+    border: 1px solid var(--hair-bright);
+    padding: 5px 8px;
+    cursor: pointer;
+    clip-path: polygon(8px 0, calc(100% - 8px) 0, 100% 8px, 100% 100%, 0 100%, 0 8px);
+    transition: border-color 0.2s, box-shadow 0.2s;
+  }
+  .relic-deck.unlocked {
+    border-color: var(--amber);
+    background: linear-gradient(180deg, rgba(255, 176, 32, 0.14) 0%, #10131b 100%);
+    box-shadow: 0 0 14px rgba(255, 176, 32, 0.2);
+  }
+  .relic-deck-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 4px;
+    font-size: 10px;
+    font-weight: 800;
+    letter-spacing: 0.04em;
+  }
+  .lock-state { display: inline-flex; align-items: center; gap: 5px; color: var(--mute); }
+  .relic-deck.unlocked .lock-state { color: var(--amber); }
+  .lock-pin {
+    display: inline-block;
+    width: 7px;
+    height: 7px;
+    background: var(--mute);
+    transition: 0.2s;
+  }
+  .relic-deck.unlocked .lock-pin {
+    background: var(--amber);
+    box-shadow: 0 0 8px var(--amber);
+    transform: rotate(45deg);
+  }
+  .relic-slots {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 4px;
+    min-height: 26px;
+    align-items: center;
+  }
+  .relic-slot {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    background: #141c2c;
+    border: 1px solid var(--hair-bright);
+    padding: 3px 6px;
+    font-size: 10px;
+    font-weight: 800;
+    color: var(--ink);
+    transition: transform 0.14s, border-color 0.14s, background 0.14s, box-shadow 0.14s;
+  }
+  .relic-slots.compact .relic-slot { padding: 2px 5px; font-size: 9px; }
+  .relic-slot.empty-slot {
+    border-style: dashed;
+    border-color: #364563;
+    background: transparent;
+    color: var(--mute);
+    min-width: 26px;
+    height: 24px;
+    justify-content: center;
+  }
+  .relic-slot.proc {
+    transform: translateY(-4px) scale(1.08);
+    border-color: #ffffff;
+    background: var(--mode-accent);
+    color: #05070c;
+    box-shadow: 0 0 12px var(--mode-accent);
+  }
+  .relic-slot svg { width: 13px; height: 13px; flex: 0 0 auto; }
+  .bench-hint { font-size: 10px; color: var(--mute); }
+
+  /* ===== Half-Sheet Loadout Tray ===== */
+  .half-sheet {
+    position: fixed;
+    left: 50%;
+    bottom: 0;
+    transform: translate(-50%, 105%);
+    width: 100%;
+    max-width: 480px;
+    max-height: 45dvh;
+    background: rgba(11, 15, 24, 0.98);
+    border-top: 2px solid var(--amber);
+    border-left: 1px solid var(--hair-bright);
+    border-right: 1px solid var(--hair-bright);
+    z-index: 60;
+    display: flex;
+    flex-direction: column;
+    transition: transform 0.22s cubic-bezier(0.2, 0.9, 0.25, 1);
+    box-shadow: 0 -10px 32px rgba(0, 0, 0, 0.78);
+  }
+  .half-sheet.open { transform: translate(-50%, 0); }
+  .half-sheet.locked-sheet { border-top-color: var(--hair-bright); }
+  .sheet-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 8px 12px;
+    border-bottom: 1px solid var(--hair);
+    flex: 0 0 auto;
+  }
+  .sheet-title { font-size: 13px; font-weight: 900; color: var(--ink); }
+  .sheet-sub { font-size: 10px; font-weight: 700; color: var(--amber); margin-top: 1px; }
+  .half-sheet.locked-sheet .sheet-sub { color: var(--mute); }
+  .sheet-body {
+    overflow-y: auto;
+    padding: 8px 12px 12px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  /* ===== Modals ===== */
+  .overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(4, 6, 10, 0.84);
+    display: none;
+    align-items: center;
+    justify-content: center;
+    z-index: 80;
+    padding: 10px;
+  }
+  .overlay.open { display: flex; }
+  .overlay.peek-mode {
+    background: transparent;
+    align-items: flex-end;
+    pointer-events: none;
+  }
+  .overlay.peek-mode .modal {
+    pointer-events: auto;
+    max-height: 44dvh;
+    background: rgba(11, 15, 24, 0.94);
+    border-top: 2px solid var(--cyan);
+  }
+  .modal {
+    width: 100%;
+    max-width: 460px;
+    max-height: 88dvh;
+    overflow-y: auto;
+    background: var(--surface);
+    border: 1px solid var(--hair-bright);
+    border-top: 2px solid var(--mode-accent);
+    padding: 12px;
+    display: flex;
+    flex-direction: column;
+    gap: 9px;
+  }
+  .modal-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    border-bottom: 1px solid var(--hair);
+    padding-bottom: 8px;
+    gap: 8px;
+  }
+  .modal-title { font-size: 15px; font-weight: 900; letter-spacing: 0.03em; }
+  .sec-lbl {
+    font-size: 10px;
+    font-weight: 800;
+    letter-spacing: 0.06em;
+    color: var(--cyan);
+    border-left: 2px solid var(--cyan);
+    padding-left: 6px;
+    margin-top: 2px;
+  }
+  .card-grid { display: flex; flex-direction: column; gap: 6px; }
+  .card {
+    background: var(--surface2);
+    border: 1px solid var(--hair);
+    border-left: 3px solid var(--hair-bright);
+    padding: 8px 10px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+  }
+  .card.equipped { border-left-color: var(--emerald); background: rgba(0, 229, 139, 0.08); }
+  .card.kind-mutation { border-left-color: var(--purple); }
+  .card.kind-tool { border-left-color: var(--amber); }
+  .card.kind-taps { border-left-color: var(--emerald); }
+  .card-icon {
+    width: 26px;
+    height: 26px;
+    background: #0a0e18;
+    border: 1px solid var(--hair-bright);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex: 0 0 auto;
+    color: var(--mode-accent);
+  }
+  .card-icon svg { width: 16px; height: 16px; }
+  .card-info { flex: 1; min-width: 0; }
+  .card-name { font-size: 12px; font-weight: 900; color: var(--ink); }
+  .card-desc { font-size: 11px; color: var(--ink2); margin-top: 2px; line-height: 1.35; }
+  .btn-primary {
+    background: var(--cyan);
+    color: #05080f;
+    border: none;
+    padding: 8px 13px;
+    font-size: 12px;
+    font-weight: 900;
+    cursor: pointer;
+  }
+  .btn-primary:disabled { opacity: 0.35; cursor: default; }
+  .btn-amber {
+    background: var(--amber);
+    color: #090b10;
+    border: none;
+    padding: 7px 11px;
+    font-size: 12px;
+    font-weight: 900;
+    cursor: pointer;
+    white-space: nowrap;
+  }
+  .btn-amber:disabled { opacity: 0.35; cursor: default; }
+  .btn-ghost {
+    background: transparent;
+    color: var(--ink2);
+    border: 1px solid var(--hair-bright);
+    padding: 6px 10px;
+    font-size: 11px;
+    font-weight: 800;
+    cursor: pointer;
+    white-space: nowrap;
+  }
+  .btn-ghost.active-peek {
+    border-color: var(--cyan);
+    color: var(--cyan);
+    background: rgba(0, 229, 255, 0.14);
+  }
+  .btn-ghost:disabled { opacity: 0.35; cursor: default; }
+
+  .tune-row {
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+    background: var(--surface2);
+    border: 1px solid var(--hair);
+    padding: 7px 9px;
+  }
+  .tune-head { display: flex; justify-content: space-between; font-size: 11px; font-weight: 800; color: var(--ink2); }
+  .tune-head span:last-child { color: var(--cyan); }
+  input[type="range"] { width: 100%; accent-color: var(--cyan); margin: 2px 0 0; }
+  .dev-bench {
+    border-top: 1px dashed var(--hair-bright);
+    padding-top: 8px;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+  }
+  textarea#jsonBox {
+    width: 100%;
+    height: 66px;
+    background: #070a11;
+    color: var(--cyan);
+    border: 1px solid var(--hair-bright);
+    padding: 6px;
+    font-size: 10px;
+    font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  }
+</style>
+</head>
+<body data-mode="tactical">
+<div id="toast" role="status" aria-live="polite"></div>
+
+<div id="app">
+  <!-- Top Bar -->
+  <div class="top-bar">
+    <div class="mode-switch">
+      <button id="btnTac" class="mode-btn active-tac" onclick="switchMode('tactical')">TACTICAL</button>
+      <button id="btnOvd" class="mode-btn" onclick="switchMode('overdrive')">OVERDRIVE</button>
+    </div>
+    <div class="top-actions">
+      <div class="coin-badge" id="coinBadge" title="所持コイン">🪙 <span id="valCoins">4</span></div>
+      <button class="icon-btn" onclick="openTuning()" title="ライブチューニング">⚙</button>
+      <button class="icon-btn" id="btnMute" onclick="toggleMute()" title="音声ミュート">🔊</button>
+      <button class="icon-btn" onclick="restartRun()" title="最初からやり直す">↻</button>
+    </div>
+  </div>
+
+  <!-- Dual-Chassis HUD -->
+  <div class="hud-chassis" id="hudChassis">
+    <div class="hud-top-line">
+      <div class="stage-cluster">
+        <span class="stage-code" id="valStage">STAGE 01</span>
+        <span class="stage-meta" id="subStage">6×6 · Lv.4</span>
+      </div>
+      <div class="hud-right-meta">
+        <span class="score-readout" id="tacScoreReadout">残 <strong id="valRemCells">0</strong></span>
+        <span id="stageBadgeWrap"></span>
+      </div>
+    </div>
+
+    <!-- TACTICAL Gauge -->
+    <div class="tac-gauge-row" id="tacGaugeRow">
+      <div class="mag-wrap">
+        <div class="mag-head">
+          <span>ENERGY PULSES</span>
+          <span class="mag-val" id="valTapsTac">10 / 15</span>
+        </div>
+        <div class="mag-cells" id="magCells"></div>
+      </div>
+      <div class="chain-pip-box">
+        <span class="chain-pip-lbl" id="chainPipLbl">3連鎖で+1弾</span>
+        <div class="chain-pips" id="chainPips"></div>
+      </div>
+    </div>
+
+    <!-- OVERDRIVE Gauge -->
+    <div class="ovd-gauge-row" id="ovdGaugeRow" style="display:none;">
+      <div class="ovd-left">
+        <div class="ovd-score-line">
+          <span class="ovd-score-now" id="valScoreOvd">0</span>
+          <span class="ovd-score-tgt" id="valTargetOvd">/ 420</span>
+        </div>
+        <div class="pressure-track">
+          <div class="pressure-fill" id="pressureFill"></div>
+        </div>
+        <div class="ovd-taps-row" id="ovdTapsRow">
+          <span>PULSES</span>
+          <div id="ovdTapPips" style="display:flex;gap:3px;"></div>
+          <span id="ovdTapNote" style="margin-left:auto;color:var(--cyan);"></span>
+        </div>
+      </div>
+      <div class="mult-core" id="multCore">
+        <div class="mult-val" id="valMult">×1.0</div>
+        <div class="mult-sub" id="valWaveSub">WAVE 1</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Status Strip + Quantum Excitation Scale -->
+  <div class="status-strip" id="statusStrip" onclick="cancelArmedTool()">
+    <span id="bannerLeft">電子雲を励起させ臨界から電離連鎖させろ</span>
+    <span id="bannerRight"></span>
+  </div>
+
+  <!-- Board Canvas with Accelerator Chamber Bezel -->
+  <div class="board-stage" id="boardWrap">
+    <div class="board-chassis" id="boardChassis">
+      <canvas id="board"></canvas>
+    </div>
+    <div id="cutin">WAVE 2!</div>
+  </div>
+
+  <!-- Thumb Deck (Dynamic Tools & Active Skills + Relic Breach Bar) -->
+  <div class="thumb-deck">
+    <div class="tool-row" id="toolBar"></div>
+    <div class="relic-deck unlocked" id="relicDeck" onclick="toggleLoadoutSheet()">
+      <div class="relic-deck-head">
+        <span class="lock-state"><span class="lock-pin"></span><span id="lockLabel">UNLOCKED · タップで装備入替</span></span>
+        <span class="bench-hint" id="slotSummary">装備 0/4 · 控え 0</span>
+      </div>
+      <div class="relic-slots" id="relicSlots"></div>
+    </div>
+  </div>
+</div>
+
+<!-- Non-Occluding Half-Sheet Loadout Tray -->
+<div class="half-sheet" id="loadoutSheet">
+  <div class="sheet-head">
+    <div>
+      <div class="sheet-title">LOADOUT TRAY (<span id="eqCount">0/4</span>)</div>
+      <div class="sheet-sub" id="loadoutNote">盤面を見ながら装備⇔控えをワンタップ入替</div>
+    </div>
+    <button class="btn-ghost" onclick="closeLoadoutSheet()">閉じる</button>
+  </div>
+  <div class="sheet-body">
+    <div class="sec-lbl">装備中（クリックで控えへ）</div>
+    <div class="card-grid" id="equippedList"></div>
+    <div class="sec-lbl">控えライブラリ（クリックで装備）</div>
+    <div class="card-grid" id="benchList"></div>
+  </div>
+</div>
+
+<!-- Shop Modal (Original 72KB Unified Offer Structure) -->
+<div class="overlay" id="shopOverlay">
+  <div class="modal">
+    <div class="modal-head">
+      <div class="modal-title" id="shopTitle">STAGE CLEAR</div>
+      <div class="coin-badge">🪙 <span id="shopCoins">0</span></div>
+    </div>
+    <div id="shopSummary" style="font-size:12px;color:var(--emerald);font-weight:700;line-height:1.45;"></div>
+    <div class="card-grid" id="shopItems"></div>
+    <div style="display:flex;gap:8px;justify-content:space-between;margin-top:4px;">
+      <button class="btn-ghost" id="btnReroll" onclick="rerollShop()">🎲 リロール (2🪙)</button>
+      <button class="btn-primary" onclick="nextStageFromShop()">次のステージへ ▶</button>
+    </div>
+  </div>
+</div>
+
+<!-- Live Tuning Hatch Modal (Original 72KB Params + Peek Mode) -->
+<div class="overlay" id="tuneOverlay">
+  <div class="modal">
+    <div class="modal-head">
+      <div class="modal-title">⚙ LIVE TUNING HATCH</div>
+      <div style="display:flex;gap:5px;">
+        <button class="btn-ghost" id="btnPeek" onclick="toggleTunePeek()">👁 透過Peek</button>
+        <button class="btn-ghost" onclick="closeModal('tuneOverlay')">閉じる</button>
+      </div>
+    </div>
+    <div class="tune-row">
+      <div class="tune-head"><span>TACTICAL 装備枠数</span><span id="tvTacSlots">4</span></div>
+      <input type="range" id="trTacSlots" min="2" max="12" step="1" oninput="applyTune()">
+    </div>
+    <div class="tune-row">
+      <div class="tune-head"><span>OVERDRIVE 装備枠数</span><span id="tvOdSlots">6</span></div>
+      <input type="range" id="trOdSlots" min="2" max="12" step="1" oninput="applyTune()">
+    </div>
+    <div class="tune-row">
+      <div class="tune-head"><span>OVERDRIVE 難易度カーブ</span><span id="tvCurve">4.5x</span></div>
+      <input type="range" id="trCurve" min="2.0" max="8.0" step="0.5" oninput="applyTune()">
+    </div>
+    <div class="tune-row">
+      <div class="tune-head"><span>確率レリック発動補正</span><span id="tvProb">1.0x</span></div>
+      <input type="range" id="trProb" min="0.5" max="2.0" step="0.1" oninput="applyTune()">
+    </div>
+    <div class="tune-row">
+      <div class="tune-head"><span>電子ビーム移動速度</span><span id="tvSpeed">1.0x</span></div>
+      <input type="range" id="trSpeed" min="0.5" max="2.5" step="0.1" oninput="applyTune()">
+    </div>
+    <div class="tune-row">
+      <div class="tune-head"><span>リフィル進路アシスト率</span><span id="tvAssist">65%</span></div>
+      <input type="range" id="trAssist" min="0" max="100" step="5" oninput="applyTune()">
+    </div>
+    <div class="tune-row">
+      <div class="tune-head"><span>初期電離Lv / リフィル上昇</span><span id="tvLv">Lv.4 / +1</span></div>
+      <div style="display:flex;gap:8px;">
+        <input type="range" id="trInitLv" min="3" max="5" step="1" oninput="applyTune()">
+        <input type="range" id="trLvInc" min="0" max="2" step="1" oninput="applyTune()">
+      </div>
+    </div>
+    <div class="dev-bench">
+      <div class="sec-lbl">DEV BENCH（デバッグ・設定保存）</div>
+      <div style="display:flex;gap:6px;flex-wrap:wrap;">
+        <button class="btn-amber" onclick="debugUnlockAll()">🔓 全レリック解放</button>
+        <button class="btn-amber" onclick="debugAddCoins()">🪙 +50</button>
+        <button class="btn-ghost" onclick="debugSkipStage()">⏭ 次面へ</button>
+        <button class="btn-ghost" onclick="regenCurrentStage()">🎲 再生成</button>
+      </div>
+      <textarea id="jsonBox" placeholder="設定JSON"></textarea>
+      <div style="display:flex;gap:6px;">
+        <button class="btn-ghost" onclick="exportTuneJson()">📋 JSON更新</button>
+        <button class="btn-primary" onclick="importTuneJson()">📥 JSON適用</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Result Modal -->
+<div class="overlay" id="resultOverlay">
+  <div class="modal" style="text-align:center;">
+    <div class="modal-title" id="resTitle" style="color:var(--pink);">💥 RUN ENDED</div>
+    <div id="resBody" style="font-size:13px;color:var(--ink2);line-height:1.7;"></div>
+    <button class="btn-primary" onclick="restartRun()">もう一度挑戦する</button>
+  </div>
+</div>
+
+<script>
+(() => {
+  'use strict';
+
+  /* ===== Toast ===== */
+  let toastTimer = null;
+  function showToast(msg, color = '#ffb020') {
+    const el = document.getElementById('toast');
+    el.textContent = msg;
+    el.style.borderColor = color;
+    el.classList.add('show');
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(() => el.classList.remove('show'), 1800);
+  }
+
+  /* ===== Original 72KB Audio System (Pentatonic Pop + Clear/Fail Chime) ===== */
+  const AudioSys = {
+    ctx: null,
+    muted: false,
+    scale: [261.63, 293.66, 329.63, 392.00, 440.00, 523.25, 587.33, 659.25, 783.99, 880.00, 1046.50],
+    init() {
+      if (!this.ctx && (window.AudioContext || window.webkitAudioContext)) {
+        try { this.ctx = new (window.AudioContext || window.webkitAudioContext)(); } catch (_) {}
+      }
+      if (this.ctx && this.ctx.state === 'suspended') this.ctx.resume().catch(() => {});
+    },
+    pop(chain = 1, heavy = false) {
+      if (heavy || chain >= 3) pulseChassis();
+      if (this.muted) return;
+      this.init();
+      if (!this.ctx) return;
+      const now = this.ctx.currentTime;
+      const osc = this.ctx.createOscillator();
+      const gain = this.ctx.createGain();
+      const freq = this.scale[Math.min(this.scale.length - 1, Math.max(0, (chain - 1) % this.scale.length))]
+        * (chain > this.scale.length ? 1.5 : 1.0);
+      osc.type = heavy ? 'triangle' : 'sine';
+      osc.frequency.setValueAtTime(freq, now);
+      osc.frequency.exponentialRampToValueAtTime(freq * (heavy ? 0.5 : 1.35), now + 0.11);
+      gain.gain.setValueAtTime(heavy ? 0.16 : 0.11, now);
+      gain.gain.exponentialRampToValueAtTime(0.001, now + 0.13);
+      osc.connect(gain); gain.connect(this.ctx.destination);
+      osc.start(now); osc.stop(now + 0.14);
+    },
+    chime(good = true) {
+      if (this.muted) return;
+      this.init();
+      if (!this.ctx) return;
+      const notes = good ? [523.25, 659.25, 783.99] : [220, 185];
+      notes.forEach((f, idx) => {
+        const now = this.ctx.currentTime + idx * 0.06;
+        const osc = this.ctx.createOscillator();
+        const g = this.ctx.createGain();
+        osc.type = 'triangle';
+        osc.frequency.setValueAtTime(f, now);
+        g.gain.setValueAtTime(0.11, now);
+        g.gain.exponentialRampToValueAtTime(0.001, now + 0.22);
+        osc.connect(g); g.connect(this.ctx.destination);
+        osc.start(now); osc.stop(now + 0.23);
+      });
+    }
+  };
+
+  let beatTimer = null;
+  function pulseChassis() {
+    const ch = document.getElementById('boardChassis');
+    if (!ch) return;
+    ch.classList.add('pulse-beat');
+    clearTimeout(beatTimer);
+    beatTimer = setTimeout(() => ch.classList.remove('pulse-beat'), 75);
+  }
+  function pulseCoin() {
+    const el = document.getElementById('coinBadge');
+    if (!el) return;
+    el.classList.remove('pulse');
+    void el.offsetWidth;
+    el.classList.add('pulse');
+    setTimeout(() => el.classList.remove('pulse'), 180);
+  }
+  function bumpMultCore() {
+    const el = document.getElementById('multCore');
+    if (!el) return;
+    el.classList.remove('bump');
+    void el.offsetWidth;
+    el.classList.add('bump');
+    setTimeout(() => el.classList.remove('bump'), 140);
+  }
+
+  /* ===== Inline Geometric SVG Icons for Original 72KB Relics ===== */
+  const RELIC_SVG = {
+    first_pierce: '<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M2 8h11M9 4l4 4-4 4"/></svg>',
+    edge_reflect_2: '<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M2 3v10M13 4L5 8l8 4"/></svg>',
+    phase_shift: '<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M8 2v12M2 8h12M4 4l8 8"/></svg>',
+    push_one: '<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.7"><rect x="2" y="5" width="5" height="6"/><path d="M8 8h6M11 5l3 3-3 3"/></svg>',
+    overcharge_det: '<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="8" cy="8" r="2.5"/><path d="M8 1v3M8 12v3M1 8h3M12 8h3M3 3l2 2M11 11l2 2M13 3l-2 2M5 11l-2 2"/></svg>',
+    thaw_wave: '<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M8 2c2 3 4 4.5 4 7a4 4 0 1 1-8 0c0-2.5 2-4 4-7z"/></svg>',
+    chain_tax: '<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.7"><rect x="2" y="5" width="5" height="6"/><rect x="9" y="5" width="5" height="6"/><path d="M7 8h2"/></svg>',
+    armor_breaker: '<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M3 3h10v6l-5 4-5-4V3zM3 13L13 3"/></svg>',
+    wall_reflect: '<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.7"><rect x="2" y="2" width="12" height="12"/><path d="M5 11l6-6"/></svg>',
+    bounce_charge: '<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M9 1L3 9h5l-1 6 6-8H8l1-6z"/></svg>',
+    cross_burst: '<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M2 2l12 12M14 2L2 14"/><circle cx="8" cy="8" r="3"/></svg>',
+    crit_refill: '<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.7"><circle cx="8" cy="8" r="5.5"/><circle cx="8" cy="8" r="2" fill="currentColor"/></svg>',
+    chain_ripple: '<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.7"><circle cx="8" cy="8" r="2"/><circle cx="8" cy="8" r="5.5" stroke-dasharray="3 2"/></svg>',
+    chain_lucky: '<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M2 8c2-4 4 4 6 0s4 4 6 0"/></svg>',
+    split_bounce: '<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M2 8h5l6-5M7 8l6 5"/></svg>',
+    crit_pop: '<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M8 1l2 5 5 2-5 2-2 5-2-5-5-2 5-2 2-5z"/></svg>',
+    last_stand: '<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M8 2l6 11H2L8 2zM8 6v3M8 11v.5"/></svg>',
+    snowball: '<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.7"><circle cx="4.5" cy="11.5" r="2.5"/><circle cx="10" cy="6" r="4.2"/></svg>'
+  };
+  function relicIcon(id) {
+    return RELIC_SVG[id] || '<svg viewBox="0 0 16 16" fill="currentColor"><rect x="4" y="4" width="8" height="8"/></svg>';
+  }
+
+  /* ===== Original 72KB Catalogs (100% Preserved) ===== */
+  const TACTICAL_RELICS = [
+    { id: 'first_pierce', name: 'ファーストアロー', short: '貫通初弾', cost: 4, desc: '各タップで最初に電離した1個から出る電子ビームが盤面を貫通する。' },
+    { id: 'edge_reflect_2', name: 'エッジリフレクト', short: '壁反射2', cost: 4, desc: '各タップにつき、最初に画面端へ当たった電子2発が跳ね返る。' },
+    { id: 'phase_shift', name: 'フェーズシフト', short: '方向切替', cost: 5, desc: '各ステージ1回、対象マスの射出軌道を「十字↔斜め」に切替できる。' },
+    { id: 'push_one', name: 'プッシュ1', short: '1マス移動', cost: 4, desc: '各ステージ1回、タップ消費なしで原子を隣接空きマスへ移動できる。' },
+    { id: 'overcharge_det', name: 'オーバーチャージ', short: '8方向電離', cost: 5, desc: '臨界原子を直接タップすると、十字＋斜めの8方向へ発射する。' },
+    { id: 'thaw_wave', name: '解凍波', short: '自動解凍2', cost: 4, desc: '各ステージ開始時、凍結マスの氷を最大2個自動で融解する。' },
+    { id: 'chain_tax', name: '効率回収', short: '2連鎖+1弾', cost: 6, desc: '残弾回復の条件が「3連鎖ごと」から「2連鎖ごと」に短縮される。' },
+    { id: 'armor_breaker', name: '装甲ブレイク', short: '周囲装甲破', cost: 5, desc: '直接タップは方向装甲を破壊し、周囲4マスの装甲も剥がす。' }
+  ];
+
+  const OVERDRIVE_RELICS = [
+    { id: 'wall_reflect', name: 'リフレクト壁', short: '外周反射', cost: 4, desc: '画面端に当たった電子ビームが1回だけ跳ね返る。' },
+    { id: 'bounce_charge', name: '跳弾チャージ', short: '反射+25', cost: 4, desc: '壁で反射した電子が命中した原子の基礎点+25。' },
+    { id: 'cross_burst', name: 'クロスバースト', short: '交差3×3', cost: 5, desc: '電子同士が交差すると周囲3×3の原子が励起+1（1Wave最大4回）。' },
+    { id: 'crit_refill', name: '臨界リフィル', short: '35%臨界湧', cost: 5, desc: '全消しリフィル時、35%の確率で最初から臨界状態で湧く。' },
+    { id: 'chain_ripple', name: '連鎖の余波', short: '5連鎖追撃', cost: 4, desc: '5連鎖ごとに盤面上で最も耐久が高い原子に1ヒット。' },
+    { id: 'chain_lucky', name: 'チェーンラッキー', short: '25%追加波', cost: 5, desc: '電離時、25%の確率で追加の4方向電子をもう1波放つ。' },
+    { id: 'split_bounce', name: 'スプリットバウンス', short: '40%反射分裂', cost: 6, desc: '壁反射時、40%の確率で電子が2発（斜め追加）に分裂する。' },
+    { id: 'crit_pop', name: 'クリティカルポップ', short: '20%×4.0', cost: 5, desc: '電離時、20%の確率でその電離スコアが×4.0になる。' },
+    { id: 'last_stand', name: '背水の陣', short: '残1で×2.5', cost: 5, desc: '残りタップが1以下のとき、すべての獲得スコアが×2.5。' },
+    { id: 'snowball', name: '雪だるま機関', short: '15連鎖+3', cost: 5, desc: '1タップで15連鎖以上するたび、ラン終了まで基礎点+3。' }
+  ];
+
+  const MUTATIONS = [
+    { id: 'cross', name: 'クロス変異', cost: 4, desc: '次ステージ以降、斜め4方向オービタル原子の出現率が+12%。' },
+    { id: 'golden', name: 'ゴールデン変異', cost: 4, desc: '電離で+1コイン＆基礎点2倍の黄金同位体の出現率+10%。' },
+    { id: 'prism', name: 'プリズム変異', cost: 5, desc: '1発命中で貫通ビームを放つプリズム出現率+8%。' }
+  ];
+
+  const TOOLS = [
+    { id: 'swap', name: 'スワップ', icon: '⇄', cost: 3, desc: '任意の2マスの原子を入れ替える。' },
+    { id: 'blast', name: 'ピンポイント爆破', icon: '✹', cost: 3, desc: '指定1マスを耐久無視で即座に電離させる。' },
+    { id: 'mirror', name: 'ミラーシールド', icon: '◈', cost: 3, desc: '次の1タップの間、画面端が2回反射壁になる。' }
+  ];
+
+  const BOSS_MODS = [
+    { id: 'freeze', name: '氷結の盤面', desc: 'ランダムな6マスが凍結状態で開始' },
+    { id: 'wind', name: '偏西風', desc: '左への電子が出ず、右へ2連射される' },
+    { id: 'onetap', name: 'ワントライ', desc: '初期タップ2回・高密度臨界・Wave×2.0開始' }
+  ];
+
+  /* ===== Original 72KB Tuning Config ===== */
+  const tuning = {
+    tacSlots: 4,
+    odSlots: 6,
+    odCurve: 4.5,
+    probMult: 1.0,
+    speedMult: 1.0,
+    assistRate: 65,
+    initBurstLv: 4,
+    refillLvInc: 1
+  };
+
+  /* ===== Original 72KB Game State ===== */
+  let mode = 'tactical'; // 'tactical' | 'overdrive'
+  const state = {
+    stage: 1,
+    taps: 10,
+    maxTaps: 15,
+    coins: 4,
+    score: 0,
+    targetScore: 420,
+    wave: 1,
+    waveMult: 1.0,
+    gridSize: 6,
+    burstLv: 4,
+    bossMod: null,
+    tappedThisStage: false,
+    busy: false,
+    chainCount: 0,
+    maxChainStage: 0,
+    refillsThisTap: 0,
+    snowballBonus: 0,
+    crossBurstCount: 0,
+    firstBurstDone: false,
+    edgeReflectLeft: 0,
+    mirrorShieldActive: false,
+    phaseShiftUsed: false,
+    pushUsed: false,
+    activeTool: null, // 'swap' | 'blast' | 'phase_shift' | 'push_one'
+    swapFirst: null,
+    rerollCost: 2,
+    wave2Preview: null,
+    wave2Done: false,
+    shake: 0,
+    refillTimer: 0,
+    pendingRefill: false,
+    stageCleared: false,
+    runOver: false,
+    peekMode: false,
+    inv: {
+      tactical: { owned: [], equipped: [], tools: ['swap'], mutations: { cross: 0, golden: 0, prism: 0 } },
+      overdrive: { owned: [], equipped: [], tools: ['blast'], mutations: { cross: 0, golden: 0, prism: 0 } }
+    }
+  };
+
+  let grid = [];      // grid[r][c] = atom object or null
+  let bumpers = [];   // bumpers[r][c] = '/' | '\\' | null
+  let droplets = [];  // flying electrons
+  let particles = [];
+  let rings = [];
+  let floaters = [];
+
+  /* ===== Relic Proc Flash Feedback ===== */
+  const procTimers = {};
+  function triggerRelicProc(id) {
+    const slot = document.querySelector(`.relic-slot[data-relic-id="${id}"]`);
+    if (!slot) return;
+    slot.classList.remove('proc');
+    void slot.offsetWidth;
+    slot.classList.add('proc');
+    clearTimeout(procTimers[id]);
+    procTimers[id] = setTimeout(() => slot.classList.remove('proc'), 240);
+  }
+
+  /* ===== Canvas Setup ===== */
+  const canvas = document.getElementById('board');
+  const ctx = canvas.getContext('2d');
+  let boardPx = 340;
+
+  function resizeCanvas() {
+    const wrap = document.getElementById('boardWrap');
+    const w = wrap ? wrap.clientWidth - 20 : window.innerWidth - 30;
+    const h = wrap ? wrap.clientHeight - 30 : window.innerHeight - 290;
+    let size = Math.floor(Math.min(w, h, 430));
+    if (!Number.isFinite(size) || size < 210) size = Math.min(336, Math.max(220, window.innerWidth - 30));
+    boardPx = size;
+    const dpr = Math.min(window.devicePixelRatio || 1, 2);
+    canvas.style.width = size + 'px';
+    canvas.style.height = size + 'px';
+    canvas.width = Math.floor(size * dpr);
+    canvas.height = Math.floor(size * dpr);
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+  }
+
+  /* ===== Helpers ===== */
+  function curInv() { return state.inv[mode]; }
+  function relicCatalog() { return mode === 'tactical' ? TACTICAL_RELICS : OVERDRIVE_RELICS; }
+  function maxSlots() { return mode === 'tactical' ? tuning.tacSlots : tuning.odSlots; }
+  function hasRelic(id) { return curInv().equipped.includes(id); }
+  function prob(base) { return Math.min(0.95, base * tuning.probMult); }
+
+  function waveColor(w) {
+    if (w <= 1) return '#ff2e7e';
+    if (w === 2) return '#ff6b1a';
+    if (w === 3) return '#ffb020';
+    if (w === 4) return '#ff2e7e';
+    if (w === 5) return '#ff45b5';
+    return '#ffffff';
+  }
+
+  function showCutin(text, color = '#ffb020', ms = 1100) {
+    const el = document.getElementById('cutin');
+    el.textContent = text;
+    el.style.borderColor = color;
+    el.style.color = color;
+    el.classList.add('show');
+    clearTimeout(el._t);
+    el._t = setTimeout(() => el.classList.remove('show'), ms);
+  }
+
+  function addFloater(x, y, text, color = '#fff', size = 13) {
+    floaters.push({ x, y, text, color, size, life: 1.0, vy: -38 });
+  }
+
+  function spawnRing(x, y, color, maxR) {
+    rings.push({ x, y, r: 4, maxR, color, life: 1.0 });
+  }
+
+  function spawnParticles(x, y, color, count = 12) {
+    for (let i = 0; i < count; i++) {
+      const a = Math.random() * Math.PI * 2;
+      const sp = 50 + Math.random() * 140;
+      particles.push({
+        x, y, vx: Math.cos(a) * sp, vy: Math.sin(a) * sp,
+        r: 1.8 + Math.random() * 2.8, color, life: 1.0
+      });
+    }
+  }
+
+  /* ===== Original 72KB Board Generation ===== */
+  function createEmptyBoard(size) {
+    grid = Array.from({ length: size }, () => Array(size).fill(null));
+    bumpers = Array.from({ length: size }, () => Array(size).fill(null));
+  }
+
+  function makeDrop(lv, burstLv, opts = {}) {
+    return {
+      lv,
+      burstLv,
+      type: opts.type || 'normal',
+      frozen: !!opts.frozen,
+      armor: opts.armor || null, // null | 'UD' | 'LR'
+      scale: 0.15,
+      pulse: 0,
+      phase: Math.random() * Math.PI * 2
+    };
+  }
+
+  function calcOverdriveTarget(stage) {
+    const area = Math.floor((stage - 1) / 3);
+    const sub = (stage - 1) % 3;
+    const base = 420 * Math.pow(tuning.odCurve, area);
+    const subMult = sub === 0 ? 1.0 : sub === 1 ? 1.7 : 2.6;
+    return Math.round((base * subMult) / 10) * 10;
+  }
+
+  function populateGrid(isRefill = false) {
+    const size = state.gridSize;
+    createEmptyBoard(size);
+    const muts = curInv().mutations;
+
+    if (mode === 'tactical') {
+      const st = state.stage;
+      const density = Math.min(0.84, 0.56 + st * 0.02);
+      const bLv = st >= 13 ? Math.max(5, tuning.initBurstLv + 1) : tuning.initBurstLv;
+      state.burstLv = bLv;
+
+      if (st >= 5) {
+        const bCount = Math.min(4, 1 + Math.floor((st - 5) / 3));
+        for (let i = 0; i < bCount; i++) {
+          const r = 1 + Math.floor(Math.random() * (size - 2));
+          const c = 1 + Math.floor(Math.random() * (size - 2));
+          bumpers[r][c] = Math.random() < 0.5 ? '/' : '\\';
+        }
+      }
+
+      let criticals = 0;
+      for (let r = 0; r < size; r++) {
+        for (let c = 0; c < size; c++) {
+          if (bumpers[r][c]) continue;
+          if (Math.random() < density) {
+            const roll = Math.random();
+            let lv = roll < 0.34 ? bLv - 1 : roll < 0.72 ? Math.max(1, bLv - 2) : Math.max(1, bLv - 3);
+            if (lv === bLv - 1) criticals++;
+            let type = 'normal';
+            if (st >= 3 && Math.random() < Math.min(0.32, 0.12 + (st - 3) * 0.02)) type = 'cross';
+            let frozen = st >= 7 && Math.random() < Math.min(0.24, 0.10 + (st - 7) * 0.015);
+            let armor = null;
+            if (!frozen && st >= 9 && Math.random() < Math.min(0.22, 0.09 + (st - 9) * 0.015)) {
+              armor = Math.random() < 0.5 ? 'UD' : 'LR';
+            }
+            grid[r][c] = makeDrop(lv, bLv, { type, frozen, armor });
+          }
+        }
+      }
+      // Guarantee at least 4 critical drops (Original 72KB feel!)
+      let guard = 0;
+      while (criticals < 4 && guard++ < 50) {
+        const r = Math.floor(Math.random() * size), c = Math.floor(Math.random() * size);
+        if (grid[r][c] && grid[r][c].lv < bLv - 1) {
+          grid[r][c].lv = bLv - 1;
+          grid[r][c].frozen = false;
+          criticals++;
+        }
+      }
+      if (hasRelic('thaw_wave')) {
+        let thawed = 0;
+        for (let r = 0; r < size && thawed < 2; r++) {
+          for (let c = 0; c < size && thawed < 2; c++) {
+            if (grid[r][c] && grid[r][c].frozen) { grid[r][c].frozen = false; thawed++; }
+          }
+        }
+        if (thawed > 0) triggerRelicProc('thaw_wave');
+      }
+      state.wave2Preview = null;
+      state.wave2Done = false;
+      if (st >= 11) {
+        state.wave2Preview = [];
+        const w2Count = Math.min(12, 6 + Math.floor((st - 11) / 2));
+        for (let i = 0; i < w2Count; i++) {
+          const r = Math.floor(Math.random() * size), c = Math.floor(Math.random() * size);
+          if (!bumpers[r][c] && !state.wave2Preview.some(p => p.r === r && p.c === c)) {
+            state.wave2Preview.push({ r, c, lv: bLv - 1 - (i % 2), type: i % 3 === 0 ? 'cross' : 'normal' });
+          }
+        }
+      }
+    } else {
+      const bLv = state.burstLv;
+      const isOneTapBoss = !isRefill && state.bossMod && state.bossMod.id === 'onetap';
+      const density = isRefill ? 0.68 : (isOneTapBoss ? 0.78 : Math.min(0.82, 0.60 + state.stage * 0.015));
+
+      for (let r = 0; r < size; r++) {
+        for (let c = 0; c < size; c++) {
+          if (Math.random() < density) {
+            let lv;
+            if (isOneTapBoss && Math.random() < 0.70) {
+              lv = bLv - 1;
+            } else if (isRefill && hasRelic('crit_refill') && Math.random() < prob(0.35)) {
+              lv = bLv - 1;
+              triggerRelicProc('crit_refill');
+            } else {
+              const roll = Math.random();
+              lv = roll < 0.36 ? bLv - 1 : roll < 0.75 ? Math.max(1, bLv - 2) : Math.max(1, bLv - 3);
+            }
+            let type = 'normal';
+            const rMut = Math.random();
+            if (rMut < muts.prism * 0.08) type = 'prism';
+            else if (rMut < muts.prism * 0.08 + muts.golden * 0.10) type = 'golden';
+            else if (rMut < muts.prism * 0.08 + muts.golden * 0.10 + muts.cross * 0.12) type = 'cross';
+            grid[r][c] = makeDrop(lv, bLv, { type });
+          }
+        }
+      }
+      if (isRefill && droplets.length > 0 && Math.random() * 100 < tuning.assistRate) {
+        const cellSz = boardPx / size;
+        let assisted = 0;
+        for (const d of droplets) {
+          if (assisted >= 3) break;
+          const tr = Math.floor((d.y + d.vy * 0.18) / cellSz);
+          const tc = Math.floor((d.x + d.vx * 0.18) / cellSz);
+          if (tr >= 0 && tr < size && tc >= 0 && tc < size) {
+            grid[tr][tc] = makeDrop(bLv - 1, bLv, { type: 'normal' });
+            assisted++;
+          }
+        }
+      }
+      if (!isRefill && state.bossMod && state.bossMod.id === 'freeze') {
+        let f = 0, tries = 0;
+        while (f < 6 && tries++ < 80) {
+          const r = Math.floor(Math.random() * size), c = Math.floor(Math.random() * size);
+          if (grid[r][c] && !grid[r][c].frozen) { grid[r][c].frozen = true; f++; }
+        }
+      }
+    }
+  }
+
+  function startStage(newRun = false) {
+    if (newRun) {
+      state.stage = 1;
+      state.coins = 4;
+      state.snowballBonus = 0;
+      state.runOver = false;
+      state.taps = mode === 'tactical' ? 10 : 5;
+      curInv().owned = [];
+      curInv().equipped = [];
+      curInv().tools = mode === 'tactical' ? ['swap'] : ['blast'];
+      curInv().mutations = { cross: 0, golden: 0, prism: 0 };
+    }
+    state.score = 0;
+    state.wave = 1;
+    state.gridSize = 6;
+    state.burstLv = tuning.initBurstLv;
+    state.waveMult = 1.0;
+    state.tappedThisStage = false;
+    state.busy = false;
+    state.chainCount = 0;
+    state.maxChainStage = 0;
+    state.refillsThisTap = 0;
+    state.crossBurstCount = 0;
+    state.mirrorShieldActive = false;
+    state.phaseShiftUsed = false;
+    state.pushUsed = false;
+    state.activeTool = null;
+    state.swapFirst = null;
+    state.pendingRefill = false;
+    state.stageCleared = false;
+    droplets = [];
+    particles = [];
+    rings = [];
+    floaters = [];
+
+    if (mode === 'overdrive') {
+      state.bossMod = (state.stage % 3 === 0) ? BOSS_MODS[(Math.floor(state.stage / 3) - 1) % BOSS_MODS.length] : null;
+      state.targetScore = calcOverdriveTarget(state.stage);
+      if (state.bossMod && state.bossMod.id === 'onetap') {
+        state.taps = 2;
+        state.waveMult = 2.0;
+      } else {
+        state.taps = state.stage >= 10 ? 4 : 5;
+      }
+    } else {
+      state.bossMod = null;
+      if (newRun) state.taps = 10;
+    }
+
+    populateGrid(false);
+    updateUI();
+  }
+
+  window.restartRun = function() {
+    closeModal('resultOverlay');
+    closeModal('shopOverlay');
+    closeLoadoutSheet();
+    startStage(true);
+  };
+
+  window.switchMode = function(m) {
+    if (mode === m) return;
+    mode = m;
+    document.body.setAttribute('data-mode', m);
+    document.getElementById('btnTac').className = 'mode-btn ' + (m === 'tactical' ? 'active-tac' : '');
+    document.getElementById('btnOvd').className = 'mode-btn ' + (m === 'overdrive' ? 'active-ovd' : '');
+    closeModal('resultOverlay');
+    closeModal('shopOverlay');
+    closeLoadoutSheet();
+    startStage(true);
+    resizeCanvas();
+  };
+
+  /* ===== Original 72KB Chain & Burst Logic ===== */
+  function countRemainingDrops() {
+    let n = 0;
+    for (let r = 0; r < state.gridSize; r++) {
+      for (let c = 0; c < state.gridSize; c++) {
+        if (grid[r][c]) n++;
+      }
+    }
+    return n;
+  }
+
+  function spawnDroplet(r, c, dx, dy, opts = {}) {
+    if (droplets.length >= 80) return;
+    const cellSz = boardPx / state.gridSize;
+    const speedBase = (boardPx * 0.92) * tuning.speedMult;
+    const mag = Math.hypot(dx, dy) || 1;
+    droplets.push({
+      x: (c + 0.5) * cellSz,
+      y: (r + 0.5) * cellSz,
+      vx: (dx / mag) * speedBase,
+      vy: (dy / mag) * speedBase,
+      pierce: !!opts.pierce,
+      bouncesLeft: opts.bouncesLeft || 0,
+      bounced: false,
+      lastCell: r + ',' + c,
+      color: opts.color || '#00e5ff'
+    });
+  }
+
+  function burstCell(r, c, directTap = false) {
+    const drop = grid[r][c];
+    if (!drop) return;
+    const cellSz = boardPx / state.gridSize;
+    const cx = (c + 0.5) * cellSz;
+    const cy = (r + 0.5) * cellSz;
+    grid[r][c] = null;
+
+    state.chainCount++;
+    if (state.chainCount > state.maxChainStage) state.maxChainStage = state.chainCount;
+    AudioSys.pop(state.chainCount, directTap);
+    state.shake = Math.min(8, state.shake + (directTap ? 4 : 2.2));
+
+    const pColor = drop.type === 'golden' ? '#ffb020' : drop.type === 'prism' ? '#c084fc' : drop.type === 'cross' ? '#ff4d94' : (mode === 'overdrive' ? '#ff9e2c' : '#ff4d94');
+    spawnRing(cx, cy, pColor, cellSz * (directTap ? 1.35 : 1.05));
+    spawnRing(cx, cy, '#ffffff', cellSz * 0.6);
+    spawnParticles(cx, cy, pColor, 15);
+    spawnParticles(cx, cy, '#ffffff', 5);
+
+    if (mode === 'tactical') {
+      const step = hasRelic('chain_tax') ? 2 : 3;
+      if (state.chainCount % step === 0) {
+        if (hasRelic('chain_tax')) triggerRelicProc('chain_tax');
+        if (state.taps < state.maxTaps) {
+          state.taps++;
+          addFloater(cx, cy - 10, '+1 TAP!', '#00e58b', 14);
+        } else {
+          state.coins++;
+          pulseCoin();
+          addFloater(cx, cy - 10, '+1 🪙', '#ffb020', 13);
+        }
+      }
+      state.score += 10 * state.chainCount;
+    } else {
+      let base = 10 + state.snowballBonus + (drop.bonusBase || 0);
+      if (drop.type === 'golden') {
+        base *= 2;
+        state.coins++;
+        pulseCoin();
+        addFloater(cx, cy - 16, '+1 🪙', '#ffb020', 13);
+      }
+      let mult = state.waveMult;
+      if (hasRelic('last_stand') && state.taps <= 1) {
+        mult *= 2.5;
+        triggerRelicProc('last_stand');
+      }
+      let crit = false;
+      if (hasRelic('crit_pop') && Math.random() < prob(0.20)) {
+        mult *= 4.0;
+        crit = true;
+        triggerRelicProc('crit_pop');
+      }
+      const pts = Math.round((base + state.chainCount * 2) * mult);
+      state.score += pts;
+      addFloater(cx, cy, (crit ? 'CRIT! +' : '+') + pts, crit ? '#fde047' : '#ffffff', crit ? 15 : 12);
+
+      if (hasRelic('chain_ripple') && state.chainCount % 5 === 0) {
+        let best = null, bestRem = -1;
+        for (let rr = 0; rr < state.gridSize; rr++) {
+          for (let cc = 0; cc < state.gridSize; cc++) {
+            const d = grid[rr][cc];
+            if (d && (d.burstLv - d.lv) > bestRem) { bestRem = d.burstLv - d.lv; best = { rr, cc }; }
+          }
+        }
+        if (best) {
+          triggerRelicProc('chain_ripple');
+          hitCell(best.rr, best.cc, 0, 0, false, false);
+        }
+      }
+    }
+
+    let dirs = [[0, -1], [0, 1], [-1, 0], [1, 0]];
+    if (drop.type === 'cross') dirs = [[-1, -1], [1, -1], [-1, 1], [1, 1]];
+    if (mode === 'tactical' && directTap && hasRelic('overcharge_det')) {
+      dirs = [[0, -1], [0, 1], [-1, 0], [1, 0], [-1, -1], [1, -1], [-1, 1], [1, 1]];
+      triggerRelicProc('overcharge_det');
+    }
+    if (drop.type === 'prism') {
+      dirs = [[0, -1], [1, 0], [-1, 0], [0, 1], [-1, -1], [1, 1]];
+    }
+
+    if (mode === 'overdrive' && state.bossMod && state.bossMod.id === 'wind') {
+      const mapped = [];
+      for (const [dx, dy] of dirs) {
+        if (dx < 0 && dy === 0) { mapped.push([1, 0]); mapped.push([1, 0.15]); }
+        else mapped.push([dx, dy]);
+      }
+      dirs = mapped;
+    }
+
+    const isFirstBurst = !state.firstBurstDone;
+    state.firstBurstDone = true;
+    const pierce = (mode === 'tactical' && isFirstBurst && hasRelic('first_pierce')) || drop.type === 'prism';
+    if (mode === 'tactical' && isFirstBurst && hasRelic('first_pierce')) triggerRelicProc('first_pierce');
+
+    let bounces = 0;
+    if (mode === 'overdrive' && hasRelic('wall_reflect')) bounces += 1;
+    if (state.mirrorShieldActive) bounces = Math.max(bounces, 2);
+
+    const fireWave = (colorOverride) => {
+      for (const [dx, dy] of dirs) {
+        spawnDroplet(r, c, dx, dy, { pierce, bouncesLeft: bounces, color: colorOverride || pColor });
+      }
+    };
+    fireWave();
+
+    if (mode === 'overdrive' && hasRelic('chain_lucky') && Math.random() < prob(0.25)) {
+      triggerRelicProc('chain_lucky');
+      fireWave('#ff2e7e');
+      addFloater(cx, cy + 12, 'LUCKY!', '#ff70ab', 11);
+    }
+
+    updateLiveHUD();
+
+    if (countRemainingDrops() === 0) {
+      if (mode === 'overdrive') {
+        state.pendingRefill = true;
+        state.refillTimer = 0.15;
+      } else if (mode === 'tactical' && state.wave2Preview && !state.wave2Done) {
+        state.wave2Done = true;
+        state.wave = 2;
+        showCutin('⚡ WAVE 2 出現！', '#00e5ff', 950);
+        AudioSys.chime(true);
+        for (const p of state.wave2Preview) {
+          if (!bumpers[p.r][p.c]) {
+            grid[p.r][p.c] = makeDrop(p.lv, state.burstLv, { type: p.type });
+          }
+        }
+        state.wave2Preview = null;
+      }
+    }
+  }
+
+  function hitCell(r, c, vx, vy, bounced = false, directTap = false) {
+    const drop = grid[r][c];
+    if (!drop) return false;
+    const cellSz = boardPx / state.gridSize;
+    const cx = (c + 0.5) * cellSz;
+    const cy = (r + 0.5) * cellSz;
+
+    if (drop.armor && !directTap) {
+      const horiz = Math.abs(vx) >= Math.abs(vy);
+      if ((drop.armor === 'LR' && horiz) || (drop.armor === 'UD' && !horiz)) {
+        spawnParticles(cx, cy, '#b4c6e0', 6);
+        addFloater(cx, cy, '🛡', '#cbd5e1', 12);
+        return true;
+      }
+    }
+    if (directTap && hasRelic('armor_breaker')) {
+      let broke = !!drop.armor;
+      drop.armor = null;
+      [[0, 1], [0, -1], [1, 0], [-1, 0]].forEach(([dr, dc]) => {
+        const nr = r + dr, nc = c + dc;
+        if (nr >= 0 && nr < state.gridSize && nc >= 0 && nc < state.gridSize && grid[nr][nc] && grid[nr][nc].armor) {
+          grid[nr][nc].armor = null;
+          broke = true;
+        }
+      });
+      if (broke) triggerRelicProc('armor_breaker');
+    }
+
+    if (drop.frozen) {
+      drop.frozen = false;
+      spawnRing(cx, cy, '#7cefff', cellSz * 0.75);
+      spawnParticles(cx, cy, '#bae6fd', 10);
+      addFloater(cx, cy, '解凍!', '#00e5ff', 12);
+      AudioSys.pop(1, false);
+      return true;
+    }
+
+    if (bounced && mode === 'overdrive' && hasRelic('bounce_charge')) {
+      drop.bonusBase = (drop.bonusBase || 0) + 25;
+      triggerRelicProc('bounce_charge');
+    }
+
+    if (drop.type === 'prism') {
+      burstCell(r, c, directTap);
+      return true;
+    }
+
+    drop.lv++;
+    drop.pulse = 1.0;
+    if (drop.lv >= drop.burstLv) {
+      burstCell(r, c, directTap);
+    } else {
+      AudioSys.pop(1, false);
+      spawnRing(cx, cy, '#ffffff', cellSz * 0.55);
+    }
+    return true;
+  }
+
+  function triggerEscalationRefill() {
+    state.pendingRefill = false;
+    state.wave++;
+    state.refillsThisTap++;
+    state.crossBurstCount = 0;
+
+    const inc = tuning.refillLvInc;
+    if (state.wave === 2) {
+      state.gridSize = 6; state.burstLv = tuning.initBurstLv + inc; state.waveMult = 2.5;
+    } else if (state.wave === 3) {
+      state.gridSize = 7; state.burstLv = tuning.initBurstLv + inc; state.waveMult = 5.0;
+    } else if (state.wave === 4) {
+      state.gridSize = 7; state.burstLv = tuning.initBurstLv + inc * 2; state.waveMult = 10.0;
+    } else if (state.wave === 5) {
+      state.gridSize = 8; state.burstLv = tuning.initBurstLv + inc * 3; state.waveMult = 20.0;
+    } else {
+      state.gridSize = 8; state.burstLv += inc; state.waveMult *= 2.0;
+    }
+
+    if (state.refillsThisTap === 2) {
+      state.coins += 2;
+      pulseCoin();
+    }
+    showCutin(`⚡ WAVE ${state.wave} (${state.gridSize}×${state.gridSize} / Lv.${state.burstLv} / ×${state.waveMult})`, waveColor(state.wave), 1100);
+    bumpMultCore();
+    AudioSys.chime(true);
+    populateGrid(true);
+    updateUI();
+  }
+
+  function finishTurn() {
+    state.busy = false;
+    state.mirrorShieldActive = false;
+
+    if (mode === 'overdrive') {
+      if (hasRelic('snowball') && state.chainCount >= 15) {
+        state.snowballBonus += 3;
+        triggerRelicProc('snowball');
+        showCutin('⛄ 雪だるま機関 +3基礎点!', '#00e5ff', 900);
+      }
+      if (state.score >= state.targetScore) { onStageClear(); return; }
+      if (state.taps <= 0) { onGameOver(); return; }
+      if (state.wave > 1) {
+        state.wave = 1;
+        state.gridSize = 6;
+        state.burstLv = tuning.initBurstLv;
+        state.waveMult = (state.bossMod && state.bossMod.id === 'onetap') ? 2.0 : 1.0;
+        populateGrid(false);
+      } else if (countRemainingDrops() === 0) {
+        populateGrid(false);
+      }
+    } else {
+      if (countRemainingDrops() === 0) { onStageClear(); return; }
+      if (state.taps <= 0) { onGameOver(); return; }
+    }
+    updateUI();
+  }
+
+  function onStageClear() {
+    state.stageCleared = true;
+    const baseReward = mode === 'tactical'
+      ? (3 + Math.min(4, Math.floor(state.stage / 3)))
+      : (4 + Math.min(5, Math.floor(state.stage / 3)));
+    const tapBonus = mode === 'overdrive' ? state.taps * 2 : 0;
+    state.coins += baseReward + tapBonus;
+    pulseCoin();
+    AudioSys.chime(true);
+    showCutin(`STAGE ${state.stage} CLEAR! +${baseReward + tapBonus}🪙`, '#00e58b', 1200);
+    updateUI();
+    setTimeout(() => openShop(baseReward, tapBonus), 650);
+  }
+
+  function onGameOver() {
+    state.runOver = true;
+    AudioSys.chime(false);
+    document.getElementById('resBody').innerHTML =
+      `モード：<strong>${mode.toUpperCase()}</strong><br>到達ステージ：<strong>Stage ${state.stage}</strong><br>スコア：<strong>${state.score.toLocaleString()}</strong><br>最大連鎖：<strong>${state.maxChainStage}</strong>`;
+    document.getElementById('resultOverlay').classList.add('open');
+  }
+
+  /* ===== Input Handling (Original 72KB Tools + Skills) ===== */
+  canvas.addEventListener('pointerdown', (e) => {
+    AudioSys.init();
+    if (state.busy || state.stageCleared || state.runOver) return;
+    const rect = canvas.getBoundingClientRect();
+    const x = e.clientX - rect.left;
+    const y = e.clientY - rect.top;
+    const cellSz = boardPx / state.gridSize;
+    const c = Math.floor(x / cellSz);
+    const r = Math.floor(y / cellSz);
+    if (r < 0 || r >= state.gridSize || c < 0 || c >= state.gridSize) return;
+
+    if (state.activeTool === 'swap') {
+      if (!grid[r][c]) return;
+      if (!state.swapFirst) {
+        state.swapFirst = { r, c };
+        updateUI();
+      } else {
+        const a = state.swapFirst;
+        const tmp = grid[a.r][a.c];
+        grid[a.r][a.c] = grid[r][c];
+        grid[r][c] = tmp;
+        consumeTool('swap');
+        state.swapFirst = null;
+        state.activeTool = null;
+        AudioSys.pop(3, false);
+        updateUI();
+      }
+      return;
+    }
+
+    if (state.activeTool === 'blast') {
+      if (!grid[r][c]) return;
+      consumeTool('blast');
+      state.activeTool = null;
+      closeLoadoutSheet();
+      beginTapSequence(false);
+      burstCell(r, c, true);
+      if (droplets.length === 0 && !state.pendingRefill) finishTurn();
+      updateUI();
+      return;
+    }
+
+    if (state.activeTool === 'phase_shift') {
+      if (!grid[r][c]) return;
+      grid[r][c].type = grid[r][c].type === 'cross' ? 'normal' : 'cross';
+      state.phaseShiftUsed = true;
+      state.activeTool = null;
+      triggerRelicProc('phase_shift');
+      AudioSys.pop(4, false);
+      updateUI();
+      return;
+    }
+
+    if (state.activeTool === 'push_one') {
+      if (!state.swapFirst) {
+        if (!grid[r][c]) return;
+        state.swapFirst = { r, c };
+        updateUI();
+      } else {
+        const a = state.swapFirst;
+        const dist = Math.abs(a.r - r) + Math.abs(a.c - c);
+        if (dist === 1 && !grid[r][c] && !bumpers[r][c]) {
+          grid[r][c] = grid[a.r][a.c];
+          grid[a.r][a.c] = null;
+          state.pushUsed = true;
+          state.swapFirst = null;
+          state.activeTool = null;
+          triggerRelicProc('push_one');
+          AudioSys.pop(3, false);
+          updateUI();
+        } else {
+          state.swapFirst = null;
+          updateUI();
+        }
+      }
+      return;
+    }
+
+    // Standard tap
+    if (!grid[r][c] || state.taps <= 0) return;
+    closeLoadoutSheet();
+    beginTapSequence(true);
+    hitCell(r, c, 0, 0, false, true);
+    if (droplets.length === 0 && !state.pendingRefill) {
+      finishTurn();
+    }
+    updateUI();
+  });
+
+  function beginTapSequence(spendTap) {
+    state.tappedThisStage = true;
+    state.busy = true;
+    if (spendTap) state.taps--;
+    state.chainCount = 0;
+    state.refillsThisTap = 0;
+    state.firstBurstDone = false;
+    state.edgeReflectLeft = (mode === 'tactical' && hasRelic('edge_reflect_2')) ? 2 : 0;
+    state.crossBurstCount = 0;
+  }
+
+  function consumeTool(id) {
+    const idx = curInv().tools.indexOf(id);
+    if (idx >= 0) curInv().tools.splice(idx, 1);
+  }
+
+  window.cancelArmedTool = function() {
+    if (state.activeTool) {
+      state.activeTool = null;
+      state.swapFirst = null;
+      updateUI();
+    }
+  };
+
+  /* ===== Shop (Original 72KB Logic) ===== */
+  let shopOffers = [];
+  function generateShopOffers() {
+    shopOffers = [];
+    const cat = relicCatalog().filter(r => !curInv().owned.includes(r.id));
+    const shuffled = [...cat].sort(() => Math.random() - 0.5);
+    shuffled.slice(0, 3).forEach(r => shopOffers.push({ kind: 'relic', item: r, bought: false }));
+
+    if (mode === 'overdrive') {
+      const m = MUTATIONS[Math.floor(Math.random() * MUTATIONS.length)];
+      shopOffers.push({ kind: 'mutation', item: m, bought: false });
+    } else {
+      shopOffers.push({ kind: 'taps', item: { id: 'buy_taps', name: '残弾補給 (+3 TAP)', cost: 3, desc: '次のステージへ持ち越すタップ数を+3回復。' }, bought: false });
+    }
+    const t = TOOLS[Math.floor(Math.random() * TOOLS.length)];
+    shopOffers.push({ kind: 'tool', item: t, bought: false });
+  }
+
+  function openShop(baseReward = 0, tapBonus = 0) {
+    state.rerollCost = 2;
+    generateShopOffers();
+    document.getElementById('shopTitle').textContent = `STAGE ${String(state.stage).padStart(2, '0')} CLEAR · SHOP`;
+    document.getElementById('shopSummary').textContent =
+      `クリア報酬 +${baseReward}🪙` + (tapBonus ? ` / 残タップボーナス +${tapBonus}🪙` : '') + ' · 獲得レリックは控えにも保存され次ステージ前に自由に付け替え可能';
+    renderShop();
+    document.getElementById('shopOverlay').classList.add('open');
+  }
+
+  function renderShop() {
+    document.getElementById('shopCoins').textContent = state.coins;
+    const rrBtn = document.getElementById('btnReroll');
+    rrBtn.textContent = `🎲 リロール (${state.rerollCost}🪙)`;
+    rrBtn.disabled = state.coins < state.rerollCost;
+    const list = document.getElementById('shopItems');
+    list.innerHTML = '';
+    shopOffers.forEach((o) => {
+      const div = document.createElement('div');
+      div.className = `card kind-${o.kind}`;
+      const iconHtml = o.kind === 'relic'
+        ? relicIcon(o.item.id)
+        : (o.kind === 'tool' ? o.item.icon : (o.kind === 'mutation' ? '✦' : '+3'));
+      div.innerHTML = `<div class="card-icon" style="font-size:13px;font-weight:900;">${iconHtml}</div>
+        <div class="card-info"><div class="card-name">${o.item.name}</div><div class="card-desc">${o.item.desc}</div></div>
+        <button class="btn-amber" ${o.bought || state.coins < o.item.cost ? 'disabled' : ''}>${o.bought ? '済' : o.item.cost + '🪙'}</button>`;
+      div.querySelector('button').onclick = () => {
+        if (o.bought || state.coins < o.item.cost) return;
+        if (o.kind === 'tool' && curInv().tools.length >= 3) {
+          showToast('ツール枠（最大3枠）がいっぱいです', '#ff2e7e');
+          return;
+        }
+        state.coins -= o.item.cost;
+        o.bought = true;
+        if (o.kind === 'relic') {
+          curInv().owned.push(o.item.id);
+          if (curInv().equipped.length < maxSlots()) {
+            curInv().equipped.push(o.item.id);
+            showToast(`${o.item.name} を即装備しました`, '#00e58b');
+          } else {
+            showToast(`${o.item.name} を控えライブラリへ格納`, '#00e5ff');
+          }
+        } else if (o.kind === 'mutation') {
+          curInv().mutations[o.item.id]++;
+        } else if (o.kind === 'tool') {
+          curInv().tools.push(o.item.id);
+        } else if (o.kind === 'taps') {
+          state.taps = Math.min(state.maxTaps, state.taps + 3);
+        }
+        AudioSys.chime(true);
+        renderShop();
+        updateUI();
+      };
+      list.appendChild(div);
+    });
+  }
+
+  window.rerollShop = function() {
+    if (state.coins < state.rerollCost) return;
+    state.coins -= state.rerollCost;
+    state.rerollCost++;
+    generateShopOffers();
+    renderShop();
+    updateUI();
+  };
+
+  window.nextStageFromShop = function() {
+    closeModal('shopOverlay');
+    state.stage++;
+    startStage(false);
+  };
+
+  /* ===== Non-Occluding Half-Sheet Loadout ===== */
+  window.toggleLoadoutSheet = function() {
+    const sheet = document.getElementById('loadoutSheet');
+    if (sheet.classList.contains('open')) {
+      sheet.classList.remove('open');
+    } else {
+      renderLoadout();
+      sheet.classList.add('open');
+    }
+  };
+  window.closeLoadoutSheet = function() {
+    document.getElementById('loadoutSheet').classList.remove('open');
+  };
+
+  function renderLoadout() {
+    const canEdit = !state.tappedThisStage && !state.busy;
+    const inv = curInv();
+    const cat = relicCatalog();
+    const sheet = document.getElementById('loadoutSheet');
+    sheet.classList.toggle('locked-sheet', !canEdit);
+    document.getElementById('eqCount').textContent = `${inv.equipped.length}/${maxSlots()}`;
+    document.getElementById('loadoutNote').textContent = canEdit
+      ? 'UNLOCKED · 上の盤面を見ながらワンタップで装備⇔控えを入替可能'
+      : 'LOCKED · すでにタップ済みのため、次のステージ開始時に組み替え可能';
+
+    const eqBox = document.getElementById('equippedList');
+    const bnBox = document.getElementById('benchList');
+    eqBox.innerHTML = '';
+    bnBox.innerHTML = '';
+
+    inv.equipped.forEach(id => {
+      const r = cat.find(x => x.id === id);
+      if (!r) return;
+      const div = document.createElement('div');
+      div.className = 'card equipped';
+      div.innerHTML = `<div class="card-icon">${relicIcon(r.id)}</div>
+        <div class="card-info"><div class="card-name">${r.name}</div><div class="card-desc">${r.desc}</div></div>
+        <button class="btn-ghost" ${!canEdit ? 'disabled' : ''}>外す</button>`;
+      div.querySelector('button').onclick = () => {
+        if (!canEdit) return;
+        inv.equipped = inv.equipped.filter(x => x !== id);
+        renderLoadout(); updateUI();
+      };
+      eqBox.appendChild(div);
+    });
+    if (inv.equipped.length === 0) eqBox.innerHTML = '<div style="font-size:11px;color:var(--mute)">装備中のレリックはありません</div>';
+
+    const bench = inv.owned.filter(id => !inv.equipped.includes(id));
+    bench.forEach(id => {
+      const r = cat.find(x => x.id === id);
+      if (!r) return;
+      const div = document.createElement('div');
+      div.className = 'card';
+      div.innerHTML = `<div class="card-icon">${relicIcon(r.id)}</div>
+        <div class="card-info"><div class="card-name">${r.name}</div><div class="card-desc">${r.desc}</div></div>
+        <button class="btn-primary" ${(!canEdit || inv.equipped.length >= maxSlots()) ? 'disabled' : ''}>装備</button>`;
+      div.querySelector('button').onclick = () => {
+        if (!canEdit || inv.equipped.length >= maxSlots()) return;
+        inv.equipped.push(id);
+        renderLoadout(); updateUI();
+      };
+      bnBox.appendChild(div);
+    });
+    if (bench.length === 0) bnBox.innerHTML = '<div style="font-size:11px;color:var(--mute)">控えなし（ショップまたは⚙全解放で追加）</div>';
+  }
+
+  /* ===== Live Tuning Hatch (Original 72KB Params + Peek) ===== */
+  window.toggleMute = function() {
+    AudioSys.muted = !AudioSys.muted;
+    document.getElementById('btnMute').textContent = AudioSys.muted ? '🔇' : '🔊';
+  };
+
+  window.closeModal = function(id) {
+    const el = document.getElementById(id);
+    el.classList.remove('open');
+    if (id === 'tuneOverlay') {
+      state.peekMode = false;
+      el.classList.remove('peek-mode');
+      document.getElementById('btnPeek').classList.remove('active-peek');
+    }
+  };
+
+  window.openTuning = function() {
+    closeLoadoutSheet();
+    syncTuningUI();
+    document.getElementById('tuneOverlay').classList.add('open');
+  };
+
+  window.toggleTunePeek = function() {
+    state.peekMode = !state.peekMode;
+    document.getElementById('tuneOverlay').classList.toggle('peek-mode', state.peekMode);
+    document.getElementById('btnPeek').classList.toggle('active-peek', state.peekMode);
+  };
+
+  function syncTuningUI() {
+    document.getElementById('trTacSlots').value = tuning.tacSlots;
+    document.getElementById('tvTacSlots').textContent = tuning.tacSlots;
+    document.getElementById('trOdSlots').value = tuning.odSlots;
+    document.getElementById('tvOdSlots').textContent = tuning.odSlots;
+    document.getElementById('trCurve').value = tuning.odCurve;
+    document.getElementById('tvCurve').textContent = tuning.odCurve + 'x';
+    document.getElementById('trProb').value = tuning.probMult;
+    document.getElementById('tvProb').textContent = tuning.probMult.toFixed(1) + 'x';
+    document.getElementById('trSpeed').value = tuning.speedMult;
+    document.getElementById('tvSpeed').textContent = tuning.speedMult.toFixed(1) + 'x';
+    document.getElementById('trAssist').value = tuning.assistRate;
+    document.getElementById('tvAssist').textContent = tuning.assistRate + '%';
+    document.getElementById('trInitLv').value = tuning.initBurstLv;
+    document.getElementById('trLvInc').value = tuning.refillLvInc;
+    document.getElementById('tvLv').textContent = `Lv.${tuning.initBurstLv} / +${tuning.refillLvInc}`;
+    document.getElementById('jsonBox').value = JSON.stringify(tuning, null, 2);
+  }
+
+  window.applyTune = function() {
+    tuning.tacSlots = parseInt(document.getElementById('trTacSlots').value, 10);
+    tuning.odSlots = parseInt(document.getElementById('trOdSlots').value, 10);
+    tuning.odCurve = parseFloat(document.getElementById('trCurve').value);
+    tuning.probMult = parseFloat(document.getElementById('trProb').value);
+    tuning.speedMult = parseFloat(document.getElementById('trSpeed').value);
+    tuning.assistRate = parseInt(document.getElementById('trAssist').value, 10);
+    tuning.initBurstLv = parseInt(document.getElementById('trInitLv').value, 10);
+    tuning.refillLvInc = parseInt(document.getElementById('trLvInc').value, 10);
+    if (mode === 'overdrive') state.targetScore = calcOverdriveTarget(state.stage);
+    syncTuningUI();
+    updateUI();
+  };
+
+  window.debugUnlockAll = function() {
+    const inv = curInv();
+    relicCatalog().forEach(r => { if (!inv.owned.includes(r.id)) inv.owned.push(r.id); });
+    showToast('🔓 全レリックを控えライブラリへ追加しました', '#00e58b');
+    updateUI();
+  };
+
+  window.debugAddCoins = function() {
+    state.coins += 50;
+    pulseCoin();
+    showToast('+50🪙 付与しました', '#ffb020');
+    updateUI();
+  };
+
+  window.debugSkipStage = function() {
+    closeModal('tuneOverlay');
+    state.stage++;
+    startStage(false);
+  };
+
+  window.regenCurrentStage = function() {
+    closeModal('tuneOverlay');
+    startStage(false);
+  };
+
+  window.exportTuneJson = function() {
+    document.getElementById('jsonBox').value = JSON.stringify(tuning, null, 2);
+    showToast('設定JSONを更新しました', '#00e5ff');
+  };
+
+  window.importTuneJson = function() {
+    try {
+      const obj = JSON.parse(document.getElementById('jsonBox').value);
+      Object.assign(tuning, obj);
+      if (mode === 'overdrive') state.targetScore = calcOverdriveTarget(state.stage);
+      syncTuningUI();
+      updateUI();
+      showToast('📥 設定JSONを適用しました', '#00e58b');
+    } catch (_) {
+      showToast('⚠️ JSON形式エラー', '#ff2e7e');
+    }
+  };
+
+  /* ===== Live HUD Sync ===== */
+  function updateLiveHUD() {
+    document.getElementById('valCoins').textContent = state.coins;
+    if (mode === 'tactical') {
+      document.getElementById('valRemCells').textContent = countRemainingDrops();
+      const valTaps = document.getElementById('valTapsTac');
+      valTaps.textContent = `${state.taps} / ${state.maxTaps}`;
+      valTaps.classList.toggle('low', state.taps <= 2);
+      const magEl = document.getElementById('magCells');
+      let magHtml = '';
+      for (let i = 0; i < state.maxTaps; i++) {
+        const filled = i < state.taps;
+        magHtml += `<div class="mag-cell${filled ? ' filled' : ''}${filled && state.taps <= 2 ? ' low' : ''}"></div>`;
+      }
+      magEl.innerHTML = magHtml;
+
+      const reqChain = hasRelic('chain_tax') ? 2 : 3;
+      const curMod = state.chainCount % reqChain;
+      document.getElementById('chainPipLbl').textContent = `${reqChain}連鎖で+1弾`;
+      const pipEl = document.getElementById('chainPips');
+      let pipHtml = '';
+      for (let i = 0; i < reqChain; i++) {
+        pipHtml += `<div class="c-pip${i < curMod ? ' lit' : ''}"></div>`;
+      }
+      pipEl.innerHTML = pipHtml;
+    } else {
+      document.getElementById('valScoreOvd').textContent = state.score.toLocaleString();
+      document.getElementById('valTargetOvd').textContent = `/ ${state.targetScore.toLocaleString()}`;
+      const pct = Math.min(100, (state.score / Math.max(1, state.targetScore)) * 100);
+      const fill = document.getElementById('pressureFill');
+      fill.style.width = pct.toFixed(1) + '%';
+      fill.classList.toggle('cleared', state.score >= state.targetScore);
+
+      const wc = waveColor(state.wave);
+      document.getElementById('boardChassis').style.setProperty('--wave-col', wc);
+      const mc = document.getElementById('multCore');
+      mc.style.borderColor = wc;
+      document.getElementById('valMult').style.color = wc;
+      document.getElementById('valMult').textContent = `×${state.waveMult}`;
+      document.getElementById('valWaveSub').textContent = (state.bossMod && state.bossMod.id === 'onetap') ? `W${state.wave} · 2X` : `WAVE ${state.wave}`;
+    }
+  }
+
+  /* ===== Full UI Sync ===== */
+  function updateUI() {
+    const isTac = mode === 'tactical';
+    document.getElementById('tacGaugeRow').style.display = isTac ? 'flex' : 'none';
+    document.getElementById('ovdGaugeRow').style.display = isTac ? 'none' : 'flex';
+    document.getElementById('tacScoreReadout').style.display = isTac ? 'inline' : 'none';
+
+    const area = Math.floor((state.stage - 1) / 3) + 1;
+    const sub = ((state.stage - 1) % 3) + 1;
+    document.getElementById('valStage').textContent = isTac
+      ? `STAGE ${String(state.stage).padStart(2, '0')}`
+      : `AREA ${area}-${sub}`;
+    document.getElementById('subStage').textContent = `${state.gridSize}×${state.gridSize} · Lv.${state.burstLv}`;
+
+    const badgeWrap = document.getElementById('stageBadgeWrap');
+    if (isTac) {
+      const unlocks = [];
+      if (state.stage >= 3) unlocks.push('斜め軌道');
+      if (state.stage >= 5) unlocks.push('偏向板');
+      if (state.stage >= 7) unlocks.push('凍結');
+      if (state.stage >= 9) unlocks.push('装甲');
+      if (state.stage >= 11) unlocks.push('2W');
+      if (state.stage >= 13) unlocks.push('Lv5');
+      badgeWrap.innerHTML = unlocks.length ? `<span class="tag-chip">${unlocks.join('·')}</span>` : '';
+    } else {
+      badgeWrap.innerHTML = state.bossMod ? `<span class="tag-chip boss">BOSS: ${state.bossMod.name}</span>` : '';
+      const maxOvdTaps = (state.bossMod && state.bossMod.id === 'onetap') ? 2 : (state.stage >= 10 ? 4 : 5);
+      const ovdRow = document.getElementById('ovdTapsRow');
+      ovdRow.classList.toggle('onetry-cover', !!(state.bossMod && state.bossMod.id === 'onetap'));
+      const pipsEl = document.getElementById('ovdTapPips');
+      let pHtml = '';
+      for (let i = 0; i < maxOvdTaps; i++) {
+        const lit = i < state.taps;
+        pHtml += `<div class="ovd-tap-pip${lit ? ' lit' : ''}${lit && state.taps <= 1 ? ' urgent' : ''}"></div>`;
+      }
+      pipsEl.innerHTML = pHtml;
+      document.getElementById('ovdTapNote').textContent = state.mirrorShieldActive ? '◈ ミラー壁ON' : (state.snowballBonus ? `基礎点+${state.snowballBonus}` : '');
+    }
+
+    updateLiveHUD();
+
+    // Status strip & chassis aim states
+    const strip = document.getElementById('statusStrip');
+    const bLeft = document.getElementById('bannerLeft');
+    const bRight = document.getElementById('bannerRight');
+    const chassis = document.getElementById('boardChassis');
+    chassis.classList.remove('aim-swap', 'aim-boom', 'mirror-on');
+    strip.className = 'status-strip';
+    if (state.mirrorShieldActive) chassis.classList.add('mirror-on');
+
+    const legendHtml = `<span class="excite-legend" title="電子雲の励起準位（基底シアン → 臨界ピンク電離）">
+      <span class="leg-cloud" style="width:10px;height:10px;color:#00d8ff;"></span>
+      <span class="leg-cloud" style="width:13px;height:13px;color:#00e58b;"></span>
+      <span class="leg-cloud" style="width:16px;height:16px;color:#ff7a2b;"></span>
+      <span class="leg-cloud" style="width:19px;height:19px;color:#ff2e7e;"></span>
+    </span>`;
+
+    if (state.activeTool) {
+      strip.classList.add('aim-mode');
+      if (state.activeTool === 'blast') {
+        strip.classList.add('aim-boom');
+        chassis.classList.add('aim-boom');
+        bLeft.textContent = '✹ 強制電離させる原子をタップ（ここをタップで解除）';
+      } else if (state.activeTool === 'swap') {
+        chassis.classList.add('aim-swap');
+        bLeft.textContent = state.swapFirst ? '⇄ 入替先の2マス目をタップ（ここをタップで解除）' : '⇄ 入替える1マス目をタップ（ここをタップで解除）';
+      } else if (state.activeTool === 'phase_shift') {
+        chassis.classList.add('aim-swap');
+        bLeft.textContent = '🔄 軌道を十字↔斜め切替する原子をタップ（解除可）';
+      } else if (state.activeTool === 'push_one') {
+        chassis.classList.add('aim-swap');
+        bLeft.textContent = state.swapFirst ? '👆 移動先の隣接空きマスをタップ（解除可）' : '👆 1マス移動させる原子をタップ（解除可）';
+      }
+      bRight.textContent = 'CANCEL';
+    } else if (isTac) {
+      bLeft.textContent = state.wave2Preview ? '四隅ブラケットは2Wave目の予告配置' : '電子雲を励起させ臨界から電離連鎖させろ';
+      bRight.innerHTML = legendHtml;
+    } else {
+      bLeft.textContent = (state.bossMod && state.bossMod.id === 'wind')
+        ? '左射撃封鎖 · 右方向2連射の偏西磁場'
+        : '全消しリフィルで盤面拡大＆高倍率電離連鎖';
+      bRight.innerHTML = state.chainCount > 0 ? `<span style="color:#ffb020;font-weight:900;">${state.chainCount} CHAIN</span>` : legendHtml;
+    }
+
+    // Dynamic Tool & Relic Active Skill Bar (Original 72KB)
+    const tBar = document.getElementById('toolBar');
+    tBar.innerHTML = '';
+    curInv().tools.forEach((tid, idx) => {
+      const t = TOOLS.find(x => x.id === tid);
+      if (!t) return;
+      const btn = document.createElement('button');
+      const armedCls = state.activeTool === tid ? (tid === 'blast' ? ' armed-boom' : ' armed-swap') : '';
+      btn.className = 'tool-btn' + armedCls;
+      btn.textContent = `${t.icon} ${t.name}`;
+      btn.onclick = () => {
+        if (state.busy) return;
+        if (tid === 'mirror') {
+          state.mirrorShieldActive = true;
+          curInv().tools.splice(idx, 1);
+          showCutin('◈ ミラーシールド展開！', '#00e5ff', 850);
+          updateUI();
+        } else {
+          state.activeTool = state.activeTool === tid ? null : tid;
+          state.swapFirst = null;
+          updateUI();
+        }
+      };
+      tBar.appendChild(btn);
+    });
+
+    if (isTac && hasRelic('phase_shift')) {
+      const btn = document.createElement('button');
+      btn.className = 'tool-btn skill-btn' + (state.activeTool === 'phase_shift' ? ' armed-swap' : '');
+      btn.textContent = '🔄 方向切替' + (state.phaseShiftUsed ? '(済)' : '');
+      btn.disabled = state.phaseShiftUsed;
+      btn.onclick = () => {
+        if (state.busy || state.phaseShiftUsed) return;
+        state.activeTool = state.activeTool === 'phase_shift' ? null : 'phase_shift';
+        state.swapFirst = null;
+        updateUI();
+      };
+      tBar.appendChild(btn);
+    }
+    if (isTac && hasRelic('push_one')) {
+      const btn = document.createElement('button');
+      btn.className = 'tool-btn skill-btn' + (state.activeTool === 'push_one' ? ' armed-swap' : '');
+      btn.textContent = '👆 1マス移動' + (state.pushUsed ? '(済)' : '');
+      btn.disabled = state.pushUsed;
+      btn.onclick = () => {
+        if (state.busy || state.pushUsed) return;
+        state.activeTool = state.activeTool === 'push_one' ? null : 'push_one';
+        state.swapFirst = null;
+        updateUI();
+      };
+      tBar.appendChild(btn);
+    }
+    if (tBar.children.length === 0) {
+      tBar.innerHTML = '<div class="tool-empty-note">所持ツールなし（ショップで購入可能）</div>';
+    }
+
+    // Relic Breach Bar
+    const inv = curInv();
+    const cat = relicCatalog();
+    const maxS = maxSlots();
+    const benchCount = inv.owned.filter(id => !inv.equipped.includes(id)).length;
+    const canSwap = !state.tappedThisStage && !state.busy;
+    const deck = document.getElementById('relicDeck');
+    deck.classList.toggle('unlocked', canSwap);
+    document.getElementById('lockLabel').textContent = canSwap
+      ? 'UNLOCKED · タップで装備入替'
+      : 'LOCKED · 戦闘中（次面で入替可）';
+    document.getElementById('slotSummary').textContent = `装備 ${inv.equipped.length}/${maxS} · 控え ${benchCount}`;
+
+    const slotsEl = document.getElementById('relicSlots');
+    slotsEl.classList.toggle('compact', maxS >= 7);
+    let sHtml = '';
+    inv.equipped.forEach(id => {
+      const r = cat.find(x => x.id === id);
+      const label = r ? (maxS >= 7 ? r.short : r.name) : id;
+      sHtml += `<div class="relic-slot" data-relic-id="${id}">${relicIcon(id)}<span>${label}</span></div>`;
+    });
+    const emptyCount = Math.max(0, Math.min(maxS - inv.equipped.length, maxS >= 7 ? 3 : maxS));
+    for (let i = 0; i < emptyCount; i++) {
+      sHtml += `<div class="relic-slot empty-slot">＋</div>`;
+    }
+    slotsEl.innerHTML = sHtml;
+  }
+
+  /* ===== Main Update & Render Loop (72KB Physics + Quantum Visuals) ===== */
+  let lastTs = 0;
+  function loop(ts) {
+    const dt = Math.min(0.04, (ts - lastTs) / 1000 || 0.016);
+    lastTs = ts;
+
+    const chainSpeed = state.chainCount >= 60 ? 2.0 : state.chainCount >= 30 ? 1.5 : state.chainCount >= 15 ? 1.25 : 1.0;
+    const simDt = dt * chainSpeed;
+
+    if (state.pendingRefill) {
+      state.refillTimer -= dt;
+      if (state.refillTimer <= 0) triggerEscalationRefill();
+    }
+
+    const cellSz = boardPx / state.gridSize;
+    for (let i = droplets.length - 1; i >= 0; i--) {
+      const d = droplets[i];
+      d.x += d.vx * simDt;
+      d.y += d.vy * simDt;
+
+      let hitEdge = false;
+      if (d.x < 4 || d.x > boardPx - 4) {
+        if (d.bouncesLeft > 0 || state.edgeReflectLeft > 0) {
+          if (d.bouncesLeft > 0) {
+            d.bouncesLeft--;
+            if (mode === 'overdrive' && hasRelic('wall_reflect')) triggerRelicProc('wall_reflect');
+          } else {
+            state.edgeReflectLeft--;
+            triggerRelicProc('edge_reflect_2');
+          }
+          d.vx = -d.vx;
+          d.x = Math.max(5, Math.min(boardPx - 5, d.x));
+          d.bounced = true;
+          d.lastCell = '';
+          hitEdge = true;
+          spawnParticles(d.x, d.y, '#ffb020', 5);
+        } else { droplets.splice(i, 1); continue; }
+      }
+      if (d.y < 4 || d.y > boardPx - 4) {
+        if (d.bouncesLeft > 0 || state.edgeReflectLeft > 0) {
+          if (d.bouncesLeft > 0) {
+            d.bouncesLeft--;
+            if (mode === 'overdrive' && hasRelic('wall_reflect')) triggerRelicProc('wall_reflect');
+          } else {
+            state.edgeReflectLeft--;
+            triggerRelicProc('edge_reflect_2');
+          }
+          d.vy = -d.vy;
+          d.y = Math.max(5, Math.min(boardPx - 5, d.y));
+          d.bounced = true;
+          d.lastCell = '';
+          hitEdge = true;
+          spawnParticles(d.x, d.y, '#ffb020', 5);
+        } else { droplets.splice(i, 1); continue; }
+      }
+      if (hitEdge && mode === 'overdrive' && hasRelic('split_bounce') && Math.random() < prob(0.40) && droplets.length < 80) {
+        triggerRelicProc('split_bounce');
+        droplets.push({
+          x: d.x, y: d.y,
+          vx: d.vx * 0.85 - d.vy * 0.4,
+          vy: d.vy * 0.85 + d.vx * 0.4,
+          pierce: d.pierce, bouncesLeft: 0, bounced: true, lastCell: '', color: '#ff70ab'
+        });
+      }
+
+      const c = Math.floor(d.x / cellSz);
+      const r = Math.floor(d.y / cellSz);
+      if (r < 0 || r >= state.gridSize || c < 0 || c >= state.gridSize) continue;
+      const key = r + ',' + c;
+      if (key === d.lastCell) continue;
+
+      if (bumpers[r][c]) {
+        d.lastCell = key;
+        const b = bumpers[r][c];
+        const ovx = d.vx, ovy = d.vy;
+        if (b === '/') { d.vx = -ovy; d.vy = -ovx; }
+        else { d.vx = ovy; d.vy = ovx; }
+        const bx = (c + 0.5) * cellSz, by = (r + 0.5) * cellSz;
+        spawnRing(bx, by, '#00e5ff', cellSz * 0.6);
+        spawnParticles(bx, by, '#00e5ff', 6);
+        continue;
+      }
+
+      if (grid[r][c]) {
+        d.lastCell = key;
+        hitCell(r, c, d.vx, d.vy, d.bounced, false);
+        if (!d.pierce) droplets.splice(i, 1);
+      }
+    }
+
+    // Overdrive Cross Burst (Original 72KB: up to 4 per Wave)
+    if (mode === 'overdrive' && hasRelic('cross_burst') && state.crossBurstCount < 4 && droplets.length >= 2) {
+      outer: for (let i = 0; i < droplets.length; i++) {
+        for (let j = i + 1; j < droplets.length; j++) {
+          if (Math.hypot(droplets[i].x - droplets[j].x, droplets[i].y - droplets[j].y) < 10) {
+            const cr = Math.floor(droplets[i].y / cellSz);
+            const cc = Math.floor(droplets[i].x / cellSz);
+            state.crossBurstCount++;
+            triggerRelicProc('cross_burst');
+            spawnRing(droplets[i].x, droplets[i].y, '#a78bfa', cellSz * 1.4);
+            addFloater(droplets[i].x, droplets[i].y, 'CROSS!', '#f472b6', 13);
+            for (let dr = -1; dr <= 1; dr++) {
+              for (let dc = -1; dc <= 1; dc++) {
+                const nr = cr + dr, nc = cc + dc;
+                if (nr >= 0 && nr < state.gridSize && nc >= 0 && nc < state.gridSize && grid[nr][nc]) {
+                  hitCell(nr, nc, 0, 0, false, false);
+                }
+              }
+            }
+            break outer;
+          }
+        }
+      }
+    }
+
+    if (state.busy && droplets.length === 0 && !state.pendingRefill) {
+      finishTurn();
+    }
+
+    // Animate atoms, orbital electrons, rings, particles, floaters
+    for (let r = 0; r < state.gridSize; r++) {
+      for (let c = 0; c < state.gridSize; c++) {
+        const d = grid[r][c];
+        if (!d) continue;
+        if (d.scale < 1) d.scale = Math.min(1, d.scale + dt * 6);
+        if (d.pulse > 0) d.pulse = Math.max(0, d.pulse - dt * 5);
+        if (!d.frozen) {
+          const rem = Math.max(1, d.burstLv - d.lv);
+          const omega = rem <= 1 ? 7.8 : (rem === 2 ? 4.4 : (rem === 3 ? 2.6 : 1.5));
+          d.phase = (d.phase || 0) + dt * omega;
+        }
+      }
+    }
+    for (let i = rings.length - 1; i >= 0; i--) {
+      const rg = rings[i];
+      rg.r += (rg.maxR - rg.r) * Math.min(1, dt * 13);
+      rg.life -= dt * 3.0;
+      if (rg.life <= 0) rings.splice(i, 1);
+    }
+    for (let i = particles.length - 1; i >= 0; i--) {
+      const p = particles[i];
+      p.x += p.vx * dt; p.y += p.vy * dt; p.life -= dt * 2.4;
+      if (p.life <= 0) particles.splice(i, 1);
+    }
+    for (let i = floaters.length - 1; i >= 0; i--) {
+      const f = floaters[i];
+      f.y += f.vy * dt; f.life -= dt * 1.25;
+      if (f.life <= 0) floaters.splice(i, 1);
+    }
+    if (state.shake > 0) state.shake = Math.max(0, state.shake - dt * 22);
+
+    drawBoard(ts);
+    requestAnimationFrame(loop);
+  }
+
+  /* ===== Lightweight Quantum Electron Cloud Renderer (0 shadowBlur, Pre-baked Sprites) ===== */
+  // Pre-bake soft radial probability cloud sprites once at boot for 60fps mobile performance
+  const CLOUD_SPRITES = {};
+  const CLOUD_COLORS = {
+    deep:   ['#e0e7ff', '#6366f1', 'rgba(99, 102, 241, 0.34)', 'rgba(99, 102, 241, 0)'],
+    cyan:   ['#e0fbff', '#00d4ff', 'rgba(0, 212, 255, 0.38)',  'rgba(0, 212, 255, 0)'],
+    green:  ['#d6ffef', '#00e58b', 'rgba(0, 229, 139, 0.42)',  'rgba(0, 229, 139, 0)'],
+    orange: ['#fff1cc', '#ff731d', 'rgba(255, 115, 29, 0.48)', 'rgba(255, 115, 29, 0)'],
+    pink:   ['#ffffff', '#ff2e7e', 'rgba(255, 46, 126, 0.56)', 'rgba(255, 46, 126, 0)'],
+    gold:   ['#ffffff', '#ffb800', 'rgba(255, 184, 0, 0.52)',  'rgba(255, 184, 0, 0)'],
+    prism:  ['#ffffff', '#38f2ff', 'rgba(192, 132, 252, 0.50)','rgba(192, 132, 252, 0)'],
+    white:  ['#ffffff', '#ffffff', 'rgba(255, 255, 255, 0.45)','rgba(255, 255, 255, 0)']
+  };
+
+  function bakeCloudSprites() {
+    const S = 64;
+    const half = S / 2;
+    for (const [key, stops] of Object.entries(CLOUD_COLORS)) {
+      const c = document.createElement('canvas');
+      c.width = S; c.height = S;
+      const g = c.getContext('2d');
+      const grad = g.createRadialGradient(half, half, 0, half, half, half);
+      grad.addColorStop(0.00, stops[0]);
+      grad.addColorStop(0.20, stops[1]);
+      grad.addColorStop(0.54, stops[2]);
+      grad.addColorStop(1.00, stops[3]);
+      g.fillStyle = grad;
+      g.fillRect(0, 0, S, S);
+      CLOUD_SPRITES[key] = c;
+    }
+  }
+  bakeCloudSprites();
+
+  // Precomputed pseudo-random probability density sample offsets (golden-angle spiral)
+  const CLOUD_SAMPLES = [];
+  for (let i = 0; i < 18; i++) {
+    const a = i * 2.3999632; // golden angle
+    const r = Math.sqrt((i + 0.6) / 18);
+    CLOUD_SAMPLES.push({ cos: Math.cos(a), sin: Math.sin(a), r, ph: i * 1.13 });
+  }
+
+  function getCloudKey(rem, type) {
+    if (type === 'golden') return 'gold';
+    if (type === 'prism') return 'prism';
+    if (rem <= 1) return 'pink';
+    if (rem === 2) return 'orange';
+    if (rem === 3) return 'green';
+    if (rem === 4) return 'cyan';
+    return 'deep';
+  }
+
+  function getCloudHex(key) {
+    return CLOUD_COLORS[key] ? CLOUD_COLORS[key][1] : '#00d4ff';
+  }
+
+  function drawRoundedRect(ctx, x, y, w, h, rad) {
+    ctx.beginPath();
+    ctx.moveTo(x + rad, y);
+    ctx.lineTo(x + w - rad, y);
+    ctx.quadraticCurveTo(x + w, y, x + w, y + rad);
+    ctx.lineTo(x + w, y + h - rad);
+    ctx.quadraticCurveTo(x + w, y + h, x + w - rad, y + h);
+    ctx.lineTo(x + rad, y + h);
+    ctx.quadraticCurveTo(x, y + h, x, y + h - rad);
+    ctx.lineTo(x, y + rad);
+    ctx.quadraticCurveTo(x, y, x + rad, y);
+    ctx.closePath();
+  }
+
+  function traceOctagon(ctx, r) {
+    const s = r * 0.42;
+    ctx.beginPath();
+    ctx.moveTo(-s, -r); ctx.lineTo(s, -r);
+    ctx.lineTo(r, -s); ctx.lineTo(r, s);
+    ctx.lineTo(s, r); ctx.lineTo(-s, r);
+    ctx.lineTo(-r, s); ctx.lineTo(-r, -s);
+    ctx.closePath();
+  }
+
+  // Stamp pre-baked soft glow sprite (fast GPU blit, zero shadowBlur)
+  function stampCloud(ctx, key, cx, cy, radius, alpha = 1) {
+    const sp = CLOUD_SPRITES[key] || CLOUD_SPRITES.cyan;
+    const prev = ctx.globalAlpha;
+    if (alpha !== 1) ctx.globalAlpha = prev * alpha;
+    ctx.drawImage(sp, cx - radius, cy - radius, radius * 2, radius * 2);
+    if (alpha !== 1) ctx.globalAlpha = prev;
+  }
+
+  function drawBoard(ts) {
+    ctx.save();
+    ctx.clearRect(0, 0, boardPx, boardPx);
+    if (state.shake > 0.2) {
+      ctx.translate((Math.random() - 0.5) * state.shake, (Math.random() - 0.5) * state.shake);
+    }
+
+    const size = state.gridSize;
+    const cs = boardPx / size;
+    const isOvd = mode === 'overdrive';
+    const tSec = ts * 0.001;
+
+    // 1. Recessed Dark Accelerator Cell Floor
+    ctx.fillStyle = isOvd ? '#100916' : '#0a101b';
+    ctx.strokeStyle = isOvd ? 'rgba(255, 65, 130, 0.22)' : 'rgba(65, 92, 135, 0.32)';
+    ctx.lineWidth = 1;
+    const pad = size >= 8 ? 1.5 : 2.2;
+    const radCorner = size >= 8 ? 4 : 6;
+    for (let r = 0; r < size; r++) {
+      for (let c = 0; c < size; c++) {
+        drawRoundedRect(ctx, c * cs + pad, r * cs + pad, cs - pad * 2, cs - pad * 2, radCorner);
+        ctx.fill();
+        ctx.stroke();
+      }
+    }
+
+    // Boss Environmental Effects
+    if (isOvd && state.bossMod && state.bossMod.id === 'wind') {
+      ctx.strokeStyle = 'rgba(255, 176, 32, 0.2)';
+      ctx.lineWidth = 1.5;
+      const offset = (ts * 0.09) % 48;
+      ctx.beginPath();
+      for (let row = 0; row < size; row++) {
+        const y = (row + 0.5) * cs;
+        for (let x = -48 + offset; x < boardPx; x += 48) {
+          ctx.moveTo(x, y); ctx.lineTo(x + 22, y);
+        }
+      }
+      ctx.stroke();
+      ctx.fillStyle = '#330815';
+      ctx.fillRect(0, 0, 7, boardPx);
+      ctx.strokeStyle = '#ff2e7e';
+      ctx.lineWidth = 2;
+      ctx.beginPath(); ctx.moveTo(7, 0); ctx.lineTo(7, boardPx); ctx.stroke();
+    } else if (isOvd && state.bossMod && state.bossMod.id === 'freeze') {
+      ctx.strokeStyle = 'rgba(0, 229, 255, 0.55)';
+      ctx.lineWidth = 2;
+      const m = 18;
+      ctx.beginPath();
+      ctx.moveTo(0, m); ctx.lineTo(m, 0);
+      ctx.moveTo(boardPx - m, 0); ctx.lineTo(boardPx, m);
+      ctx.moveTo(0, boardPx - m); ctx.lineTo(m, boardPx);
+      ctx.moveTo(boardPx - m, boardPx); ctx.lineTo(boardPx, boardPx - m);
+      ctx.stroke();
+    }
+
+    // Mirror shield / reflect edge glow
+    if (state.mirrorShieldActive || (isOvd && hasRelic('wall_reflect')) || state.edgeReflectLeft > 0) {
+      ctx.strokeStyle = state.mirrorShieldActive ? '#00e5ff' : 'rgba(167, 139, 250, 0.55)';
+      ctx.lineWidth = state.mirrorShieldActive ? 3 : 2;
+      ctx.strokeRect(2, 2, boardPx - 4, boardPx - 4);
+    }
+
+    // 2. Wave 2 Preview Ghosts (Tactical Stage 11+)
+    if (state.wave2Preview) {
+      for (const p of state.wave2Preview) {
+        if (grid[p.r][p.c]) continue;
+        const x0 = p.c * cs + 6, y0 = p.r * cs + 6, s = cs - 12, b = 6;
+        ctx.strokeStyle = 'rgba(0, 229, 255, 0.35)';
+        ctx.lineWidth = 1.2;
+        ctx.beginPath();
+        ctx.moveTo(x0, y0 + b); ctx.lineTo(x0, y0); ctx.lineTo(x0 + b, y0);
+        ctx.moveTo(x0 + s - b, y0); ctx.lineTo(x0 + s, y0); ctx.lineTo(x0 + s, y0 + b);
+        ctx.moveTo(x0, y0 + s - b); ctx.lineTo(x0, y0 + s); ctx.lineTo(x0 + b, y0 + s);
+        ctx.moveTo(x0 + s - b, y0 + s); ctx.lineTo(x0 + s, y0 + s); ctx.lineTo(x0 + s, y0 + s - b);
+        ctx.stroke();
+        const pKey = getCloudKey(Math.max(1, state.burstLv - p.lv), p.type);
+        stampCloud(ctx, pKey, (p.c + 0.5) * cs, (p.r + 0.5) * cs, cs * 0.28, 0.38);
+      }
+    }
+
+    // 3. Magnetic Deflector Bumpers
+    for (let r = 0; r < size; r++) {
+      for (let c = 0; c < size; c++) {
+        const b = bumpers[r][c];
+        if (!b) continue;
+        const x = (c + 0.5) * cs, y = (r + 0.5) * cs;
+        ctx.save();
+        ctx.translate(x, y);
+        ctx.rotate(b === '/' ? -Math.PI / 4 : Math.PI / 4);
+        const bw = cs * 0.72, bh = Math.max(7, cs * 0.18);
+        ctx.fillStyle = '#475978';
+        drawRoundedRect(ctx, -bw / 2, -bh / 2, bw, bh, 2);
+        ctx.fill();
+        ctx.strokeStyle = '#00e5ff';
+        ctx.lineWidth = 1.4;
+        ctx.stroke();
+        ctx.restore();
+      }
+    }
+
+    // 4. Quantum Electron Clouds (Additive Probability Density Pass — Ultra-Fast)
+    ctx.save();
+    ctx.globalCompositeOperation = 'lighter';
+
+    for (let r = 0; r < size; r++) {
+      for (let c = 0; c < size; c++) {
+        const d = grid[r][c];
+        if (!d) continue;
+        const rem = Math.max(1, d.burstLv - d.lv);
+        const key = getCloudKey(rem, d.type);
+        const hex = getCloudHex(key);
+
+        const bounce = d.pulse > 0 ? Math.sin(d.pulse * Math.PI * 2.5) * d.pulse * 0.18 : 0;
+        const breathe = d.frozen ? 0 : Math.sin(tSec * (rem <= 1 ? 7.5 : (rem === 2 ? 4.2 : 2.2)) + (d.phase || 0)) * (rem <= 1 ? 0.055 : 0.03);
+        // Cloud spatial radius expands clearly with excitation (1s -> 2s -> 3s -> critical ionization)
+        const baseScale = rem >= 5 ? 0.25 : (rem === 4 ? 0.30 : (rem === 3 ? 0.37 : (rem === 2 ? 0.44 : 0.52)));
+        const cloudR = cs * (baseScale + breathe) * (1 + bounce) * d.scale;
+
+        let x = (c + 0.5) * cs;
+        let y = (r + 0.5) * cs;
+        if (rem === 1 && !d.frozen) {
+          x += Math.sin(ts * 0.042 + r * 3 + c) * 1.1;
+          y += Math.cos(ts * 0.048 + c * 2) * 1.1;
+        }
+
+        if (d.type === 'cross') {
+          // d_xy Orbital: 4 diagonal probability lobes (visually unmistakable X-ejection!)
+          const lobeDist = cloudR * 0.42;
+          const lobeR = cloudR * 0.56;
+          stampCloud(ctx, key, x - lobeDist, y - lobeDist, lobeR, 0.88);
+          stampCloud(ctx, key, x + lobeDist, y - lobeDist, lobeR, 0.88);
+          stampCloud(ctx, key, x - lobeDist, y + lobeDist, lobeR, 0.88);
+          stampCloud(ctx, key, x + lobeDist, y + lobeDist, lobeR, 0.88);
+          stampCloud(ctx, 'white', x, y, cloudR * 0.26, rem === 1 ? 0.85 : 0.55);
+        } else {
+          // Main spherical probability density cloud
+          stampCloud(ctx, key, x, y, cloudR, rem <= 1 ? 1.0 : 0.92);
+
+          // rem === 3: soft 2s radial node ring (subtle quantum wave shell)
+          if (rem === 3) {
+            ctx.strokeStyle = 'rgba(0, 229, 139, 0.28)';
+            ctx.lineWidth = 1.2;
+            ctx.beginPath();
+            ctx.arc(x, y, cloudR * 0.72, 0, Math.PI * 2);
+            ctx.stroke();
+          }
+
+          // rem <= 2: 4-way ortho lobe bulges showing imminent 4-way ejection
+          if (rem <= 2) {
+            const bulgeDist = cloudR * (rem === 1 ? 0.38 : 0.30);
+            const bulgeR = cloudR * (rem === 1 ? 0.48 : 0.38);
+            const alpha = rem === 1 ? 0.72 : 0.46;
+            stampCloud(ctx, key, x, y - bulgeDist, bulgeR, alpha);
+            stampCloud(ctx, key, x, y + bulgeDist, bulgeR, alpha);
+            stampCloud(ctx, key, x - bulgeDist, y, bulgeR, alpha);
+            stampCloud(ctx, key, x + bulgeDist, y, bulgeR, alpha);
+          }
+
+          // Bright white-hot quantum core at critical state
+          if (rem === 1) {
+            stampCloud(ctx, 'white', x, y, cloudR * 0.44, 0.9);
+          }
+        }
+
+        // Shimmering Quantum Probability Density Dots (Monte Carlo cloud stipple!)
+        // Number & spread of twinkling dots scale with excitation level (frozen = still)
+        const dotCount = rem >= 5 ? 5 : (rem === 4 ? 7 : (rem === 3 ? 10 : (rem === 2 ? 14 : 18)));
+        const spread = cloudR * 0.78;
+        const speed = rem <= 1 ? 5.2 : (rem === 2 ? 3.2 : 1.8);
+        const phaseBase = d.frozen ? 0 : tSec * speed;
+
+        ctx.fillStyle = rem === 1 ? '#ffffff' : hex;
+        for (let k = 0; k < dotCount; k++) {
+          const sm = CLOUD_SAMPLES[k];
+          const flicker = d.frozen ? 0.55 : (0.5 + 0.5 * Math.sin(phaseBase + sm.ph + (d.phase || 0)));
+          if (flicker < 0.22) continue;
+          const dr = sm.r * spread;
+          // Rotate sample field slowly for organic probability cloud drift
+          const rot = d.frozen ? 0 : tSec * (rem <= 1 ? 0.9 : 0.35);
+          const cr = Math.cos(rot), sr = Math.sin(rot);
+          const dx = (sm.cos * cr - sm.sin * sr) * dr;
+          const dy = (sm.cos * sr + sm.sin * cr) * dr;
+          ctx.globalAlpha = flicker * (rem <= 1 ? 0.92 : 0.72);
+          const dotSz = rem <= 1 ? 1.9 : 1.45;
+          ctx.fillRect(x + dx - dotSz * 0.5, y + dy - dotSz * 0.5, dotSz, dotSz);
+        }
+        ctx.globalAlpha = 1;
+      }
+    }
+
+    // 5. Ionization Shockwaves + Ejected Electron Wave Packets (Additive, 0 shadowBlur)
+    for (const rg of rings) {
+      ctx.globalAlpha = Math.max(0, rg.life * 0.85);
+      ctx.strokeStyle = rg.color;
+      ctx.lineWidth = 2.4 * rg.life;
+      ctx.beginPath();
+      ctx.arc(rg.x, rg.y, rg.r, 0, Math.PI * 2);
+      ctx.stroke();
+    }
+    ctx.globalAlpha = 1;
+
+    for (const d of droplets) {
+      const tailLen = d.pierce ? 24 : 16;
+      const mag = Math.hypot(d.vx, d.vy) || 1;
+      const ux = d.vx / mag, uy = d.vy / mag;
+      const col = d.pierce ? '#00e5ff' : (d.bounced ? '#ffb020' : d.color);
+      const spKey = d.pierce ? 'cyan' : (d.bounced ? 'gold' : (mode === 'overdrive' ? 'orange' : 'pink'));
+
+      ctx.strokeStyle = col;
+      ctx.lineWidth = d.pierce ? 3.2 : 2.4;
+      ctx.lineCap = 'round';
+      ctx.globalAlpha = 0.82;
+      ctx.beginPath();
+      ctx.moveTo(d.x - ux * tailLen, d.y - uy * tailLen);
+      ctx.lineTo(d.x, d.y);
+      ctx.stroke();
+      ctx.globalAlpha = 1;
+
+      stampCloud(ctx, spKey, d.x, d.y, Math.max(8, cs * 0.22), 0.95);
+    }
+
+    for (const p of particles) {
+      ctx.globalAlpha = Math.max(0, p.life);
+      ctx.fillStyle = p.color;
+      const sz = Math.max(1.5, p.r * p.life * 1.4);
+      ctx.fillRect(p.x - sz * 0.5, p.y - sz * 0.5, sz, sz);
+    }
+    ctx.restore();
+
+    // 6. Crisp Structural Overlays (Golden/Prism Core, Critical Rim, Frozen Crystal, Armor, Swap Selection)
+    for (let r = 0; r < size; r++) {
+      for (let c = 0; c < size; c++) {
+        const d = grid[r][c];
+        if (!d) continue;
+        const x = (c + 0.5) * cs;
+        const y = (r + 0.5) * cs;
+        const rem = Math.max(1, d.burstLv - d.lv);
+
+        if (state.swapFirst && state.swapFirst.r === r && state.swapFirst.c === c) {
+          ctx.strokeStyle = '#ffb020';
+          ctx.lineWidth = 2.5;
+          ctx.strokeRect(c * cs + 2, r * cs + 2, cs - 4, cs - 4);
+        }
+
+        // Subtle crisp white ionization rim only on rem === 1 so critical cells pop immediately
+        if (rem === 1) {
+          ctx.strokeStyle = 'rgba(255, 255, 255, 0.72)';
+          ctx.lineWidth = 1.4;
+          ctx.setLineDash([4, 3]);
+          ctx.beginPath();
+          ctx.arc(x, y, cs * 0.41 * d.scale, 0, Math.PI * 2);
+          ctx.stroke();
+          ctx.setLineDash([]);
+        }
+
+        // Golden / Prism crystalline nucleus marker
+        if (d.type === 'golden') {
+          ctx.save();
+          ctx.translate(x, y);
+          traceOctagon(ctx, cs * 0.16 * d.scale);
+          ctx.fillStyle = '#fff5bd';
+          ctx.fill();
+          ctx.strokeStyle = '#ffb800';
+          ctx.lineWidth = 1.5;
+          ctx.stroke();
+          ctx.restore();
+        } else if (d.type === 'prism') {
+          const pr = cs * 0.18 * d.scale;
+          ctx.beginPath();
+          ctx.moveTo(x, y - pr);
+          ctx.lineTo(x + pr * 0.9, y + pr * 0.72);
+          ctx.lineTo(x - pr * 0.9, y + pr * 0.72);
+          ctx.closePath();
+          ctx.fillStyle = '#ffffff';
+          ctx.fill();
+          ctx.strokeStyle = '#c084fc';
+          ctx.lineWidth = 1.5;
+          ctx.stroke();
+        }
+
+        // Frozen Cryo-Crystal Shell
+        if (d.frozen) {
+          const fr = cs * 0.42;
+          ctx.beginPath();
+          ctx.moveTo(x, y - fr);
+          ctx.lineTo(x + fr * 0.84, y - fr * 0.38);
+          ctx.lineTo(x + fr * 0.92, y + fr * 0.48);
+          ctx.lineTo(x, y + fr);
+          ctx.lineTo(x - fr * 0.92, y + fr * 0.48);
+          ctx.lineTo(x - fr * 0.84, y - fr * 0.38);
+          ctx.closePath();
+          ctx.fillStyle = 'rgba(130, 225, 255, 0.20)';
+          ctx.fill();
+          ctx.strokeStyle = '#c4f4ff';
+          ctx.lineWidth = 1.5;
+          ctx.stroke();
+        }
+
+        // Directional Magnetic Shield Brackets
+        if (d.armor) {
+          const a = cs * 0.42, w = a * 0.72;
+          const drawPlate = () => {
+            ctx.beginPath();
+            if (d.armor === 'UD') {
+              ctx.moveTo(x - w, y - a + 5); ctx.lineTo(x - w * 0.75, y - a); ctx.lineTo(x + w * 0.75, y - a); ctx.lineTo(x + w, y - a + 5);
+              ctx.moveTo(x - w, y + a - 5); ctx.lineTo(x - w * 0.75, y + a); ctx.lineTo(x + w * 0.75, y + a); ctx.lineTo(x + w, y + a - 5);
+            } else {
+              ctx.moveTo(x - a + 5, y - w); ctx.lineTo(x - a, y - w * 0.75); ctx.lineTo(x - a, y + w * 0.75); ctx.lineTo(x - a + 5, y + w);
+              ctx.moveTo(x + a - 5, y - w); ctx.lineTo(x + a, y - w * 0.75); ctx.lineTo(x + a, y + w * 0.75); ctx.lineTo(x + a - 5, y + w);
+            }
+            ctx.stroke();
+          };
+          ctx.lineCap = 'round';
+          ctx.lineJoin = 'round';
+          ctx.strokeStyle = '#1b2434';
+          ctx.lineWidth = 5.5;
+          drawPlate();
+          ctx.strokeStyle = '#b4c6e0';
+          ctx.lineWidth = 2.4;
+          drawPlate();
+        }
+      }
+    }
+
+    // 7. Floaters
+    ctx.textAlign = 'center';
+    ctx.lineWidth = 3;
+    ctx.strokeStyle = '#07090e';
+    for (const f of floaters) {
+      ctx.globalAlpha = Math.max(0, f.life);
+      ctx.font = `900 ${f.size}px -apple-system, BlinkMacSystemFont, sans-serif`;
+      ctx.strokeText(f.text, f.x, f.y);
+      ctx.fillStyle = f.color;
+      ctx.fillText(f.text, f.x, f.y);
+    }
+    ctx.globalAlpha = 1;
+
+    ctx.restore();
+  }
+
+  /* ===== Boot ===== */
+  function boot() {
+    resizeCanvas();
+    startStage(true);
+    requestAnimationFrame(loop);
+  }
+  window.addEventListener('resize', resizeCanvas);
+  window.addEventListener('load', resizeCanvas);
+  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', boot);
+  else boot();
+})();
+</script>
+</body>
+</html>
