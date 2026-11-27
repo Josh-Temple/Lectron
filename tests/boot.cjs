@@ -2,10 +2,10 @@
 const assert=require('node:assert/strict'),fs=require('node:fs'),path=require('node:path');
 const html=fs.readFileSync(path.join(__dirname,'..','index.html'),'utf8');
 const script=html.match(/<script>([\s\S]*?)<\/script>/)[1];
-const injected=script.replace('  else boot();\n})();','  else boot();\n  window.test={state,tuning,preferences,AudioSys,getGrid:()=>grid,drawBoard,spawnDroplet,getDroplets:()=>droplets,triggerEscalationRefill,generateShopOffers,getOffers:()=>shopOffers,getMode:()=>mode};\n})();');
+const injected=script.replace('  else boot();\n})();','  else boot();\n  window.test={state,tuning,preferences,records,AudioSys,getGrid:()=>grid,drawBoard,loop,hitCell,burstCell,onGameOver,openShop,spawnDroplet,getDroplets:()=>droplets,triggerEscalationRefill,generateShopOffers,getOffers:()=>shopOffers,getMode:()=>mode};\n})();');
 assert.ok(injected!==script);
 function launch({search='',saved=new Map(),blocked=false,reduced=false}={}){
-  const byId=new Map();let document;
+  const byId=new Map();let document,clip='';
   const ctx=new Proxy({},{get(t,k){if(k in t)return t[k];return k==='createRadialGradient'?()=>({addColorStop(){}}):()=>{};}});
   function element(id=''){
     const flags=new Set(),listeners={};
@@ -19,12 +19,13 @@ function launch({search='',saved=new Map(),blocked=false,reduced=false}={}){
   for(const m of html.matchAll(/\bid="([^"]+)"/g))byId.set(m[1],element(m[1]));
   document={body:element('body'),activeElement:null,readyState:'complete',getElementById:id=>{assert.ok(byId.has(id),'Missing element: '+id);return byId.get(id)},createElement:()=>element(),querySelector:()=>null,addEventListener(){}};
   const w={document,location:{pathname:'/Lectron/',search},innerWidth:390,innerHeight:800,devicePixelRatio:2,
+    navigator:{clipboard:{writeText:txt=>{clip=txt;return {then:fn=>fn()};}}},
     URLSearchParams:globalThis.URLSearchParams||class{constructor(s){this.s=s}get(k){return this.s.slice(1).split('&').map(x=>x.split('=')).find(x=>x[0]===k)?.[1]??null}},
     matchMedia:()=>({matches:reduced,addEventListener(){}}),addEventListener(){},
-    localStorage:{getItem:k=>{if(blocked)throw Error('blocked');return saved.get(k)??null},setItem:(k,v)=>{if(blocked)throw Error('blocked');saved.set(k,v)}},
+    localStorage:{getItem:k=>{if(blocked)throw Error('blocked');return saved.get(k)??null},setItem:(k,v)=>{if(blocked)throw Error('blocked');saved.set(k,v)},removeItem:k=>{if(blocked)throw Error('blocked');saved.delete(k)}},
     setTimeout(){return 1},clearTimeout(){},requestAnimationFrame(){}};
   new Function('window','with(window){'+injected+'}')(w);
-  return {w,t:w.test,el:id=>document.getElementById(id),saved};
+  return {w,t:w.test,el:id=>document.getElementById(id),saved,getClip:()=>clip};
 }
 function pick(g){for(let r=0;r<g.length;r++)for(let c=0;c<g.length;c++)if(g[r][c])return {r,c};throw Error('empty grid')}
 const a=launch();
@@ -49,16 +50,37 @@ assert.equal(restored.t.preferences.numbers,true);assert.equal(restored.t.prefer
 assert.equal(restored.t.state.stage,1);assert.equal(restored.t.state.taps,10);restored.t.drawBoard(2000);
 restored.w.resetPreferences();assert.equal(restored.t.tuning.odCurve,4.5);assert.equal(restored.t.preferences.numbers,false);
 const blocked=launch({blocked:true});blocked.w.toggleMute();assert.ok(blocked.el('toast').textContent.includes('保存できません'));
-const corrupt=launch({saved:new Map([['lectron.preferences.v1:/Lectron/','not json']])});assert.equal(corrupt.t.tuning.odCurve,4.5);
+const corrupt=launch({saved:new Map([['lectron.preferences.v1:/Lectron/','not json'],['lectron.run.v1:/Lectron/','{bad']])});assert.equal(corrupt.t.tuning.odCurve,4.5);assert.equal(corrupt.t.state.stage,1);
 const debug=launch({search:'?debug=1'});assert.equal(debug.el('debugBench').hidden,false);debug.w.debugAddCoins();assert.equal(debug.t.state.coins,54);
 debug.w.debugUnlockAll();assert.equal(debug.t.state.inv.tactical.owned.length,8);debug.w.debugSkipStage();assert.equal(debug.t.state.stage,2);
+// Verify Stage 2 autosave restores on reload and restartRun discards it
+const resumed=launch({saved:debug.saved});
+assert.equal(resumed.t.state.stage,2);assert.equal(resumed.t.state.coins,54);assert.equal(resumed.t.state.inv.tactical.owned.length,8);
+resumed.w.restartRun();
+const afterReset=launch({saved:resumed.saved});
+assert.equal(afterReset.t.state.stage,1);assert.equal(afterReset.t.state.coins,4);
 debug.w.switchMode('overdrive');
 for(const [wave,size,lv,mult] of [[2,6,5,2.5],[3,7,5,5],[4,7,6,10],[5,8,7,20],[6,8,8,40]]){debug.t.triggerEscalationRefill();assert.deepEqual([debug.t.state.wave,debug.t.state.gridSize,debug.t.state.burstLv,debug.t.state.waveMult],[wave,size,lv,mult]);}
+assert.ok(debug.t.state.hitstop>=0.02&&debug.t.state.hitstop<=0.035);
+const redEnv=launch({reduced:true});redEnv.t.triggerEscalationRefill();assert.equal(redEnv.t.state.hitstop,0);
 for(let i=0;i<100;i++)debug.t.spawnDroplet(0,0,1,0);assert.equal(debug.t.getDroplets().length,80);
 debug.t.generateShopOffers();const offers=debug.t.getOffers().filter(o=>o.kind==='relic');assert.equal(offers.length,3);assert.equal(new Set(offers.map(o=>o.item.id)).size,3);
+// Verify Shop autosave, role tags, BEST records, NEW BEST badge & Share copy
+debug.t.state.stageCleared=true;debug.t.openShop(4,2);
+assert.ok(debug.el('shopItems').children[0].innerHTML.includes('role-tag'));
+const shopResumed=launch({saved:debug.saved});
+assert.equal(shopResumed.t.getMode(),'overdrive');assert.ok(shopResumed.el('shopOverlay').classList.contains('open'));
+shopResumed.t.state.runScore=1280;shopResumed.t.state.maxChainRun=14;shopResumed.t.onGameOver();
+assert.equal(shopResumed.t.records.overdrive.score,1280);assert.equal(shopResumed.t.records.overdrive.chain,14);
+assert.ok(shopResumed.el('resBody').innerHTML.includes('NEW BEST'));
+shopResumed.w.copyRunShare();assert.ok(shopResumed.getClip().includes('Lectron [OVERDRIVE]'));
+// Help modal + Escape close + Synth API presence
+shopResumed.w.openHelp();assert.ok(shopResumed.el('helpOverlay').classList.contains('open'));
+shopResumed.el('helpOverlay').emit('keydown',{key:'Escape'});assert.ok(!shopResumed.el('helpOverlay').classList.contains('open'));
+for(const fn of ['excite','pop','reflect','shatter','armorBlock','fanfare','mechClick'])assert.equal(typeof shopResumed.t.AudioSys[fn],'function');
 const touch=launch(),cv=touch.el('board'),tc=pick(touch.t.getGrid());
 const point={isPrimary:true,button:0,pointerId:1,clientX:(tc.c+.5)*340/6,clientY:(tc.r+.5)*340/6};
 cv.emit('pointerdown',point);cv.emit('pointercancel',point);cv.emit('pointerup',point);assert.equal(touch.t.state.taps,10);
 cv.emit('pointerdown',point);cv.emit('pointerdown',{...point,isPrimary:false,pointerId:2});cv.emit('pointerup',point);assert.equal(touch.t.state.taps,10);
 cv.emit('pointerdown',point);cv.emit('pointerup',point);assert.equal(touch.t.state.taps,9);
-console.log('PASS: mocked DOM boot, keyboard/pointer, preferences, debug, wave progression, beam cap and shop');
+console.log('PASS: mocked DOM boot, keyboard/pointer, preferences, debug, wave progression, beam cap, shop, autosave, records, help and synth');
