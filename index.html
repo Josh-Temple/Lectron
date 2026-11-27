@@ -473,7 +473,7 @@
     display: block;
     background: #060910;
     border: 1px solid #0b0f18;
-    touch-action: none;
+    touch-action: pinch-zoom;
     cursor: pointer;
   }
 
@@ -881,7 +881,7 @@
     </div>
     <div class="top-actions">
       <div class="coin-badge" id="coinBadge" title="所持コイン">🪙 <span id="valCoins">4</span></div>
-      <button class="icon-btn" onclick="openTuning()" title="ライブチューニング">⚙</button>
+      <button class="icon-btn" id="btnTune" onclick="openTuning()" title="ライブチューニング" aria-label="ライブチューニング">⚙</button>
       <button class="icon-btn" id="btnMute" onclick="toggleMute()" title="音声ミュート">🔊</button>
       <button class="icon-btn" onclick="restartRun()" title="最初からやり直す">↻</button>
     </div>
@@ -1001,10 +1001,10 @@
 </div>
 
 <!-- Live Tuning Hatch Modal (Original 72KB Params + Peek Mode) -->
-<div class="overlay" id="tuneOverlay">
+<div class="overlay" id="tuneOverlay" role="dialog" aria-labelledby="tuneTitle">
   <div class="modal">
     <div class="modal-head">
-      <div class="modal-title">⚙ LIVE TUNING HATCH</div>
+      <div class="modal-title" id="tuneTitle">⚙ LIVE TUNING HATCH</div>
       <div style="display:flex;gap:5px;">
         <button class="btn-ghost" id="btnPeek" onclick="toggleTunePeek()">👁 透過Peek</button>
         <button class="btn-ghost" onclick="closeModal('tuneOverlay')">閉じる</button>
@@ -1983,7 +1983,20 @@
       if (!e.repeat) { activateCell(keyboardCell.r, keyboardCell.c); describeKeyboardCell(); }
     } else if (e.key === 'Escape') { e.preventDefault(); cancelArmedTool(); describeKeyboardCell(); }
   });
+  // Commit taps on release; multi-touch, dragging or browser pinch cancels.
+  let pointerTap = null;
   canvas.addEventListener('pointerdown', e => {
+    if (!e.isPrimary || e.button !== 0) { pointerTap = null; return; }
+    pointerTap = { id:e.pointerId, x:e.clientX, y:e.clientY };
+  });
+  canvas.addEventListener('pointermove', e => {
+    if (pointerTap?.id === e.pointerId && Math.hypot(e.clientX-pointerTap.x,e.clientY-pointerTap.y)>12) pointerTap=null;
+  });
+  canvas.addEventListener('pointercancel', () => { pointerTap=null; });
+  canvas.addEventListener('pointerleave', () => { pointerTap=null; });
+  canvas.addEventListener('pointerup', e => {
+    if (!pointerTap || pointerTap.id !== e.pointerId) return;
+    pointerTap=null;
     const rect = canvas.getBoundingClientRect();
     const c = Math.floor((e.clientX - rect.left) / rect.width * state.gridSize);
     const r = Math.floor((e.clientY - rect.top) / rect.height * state.gridSize);
@@ -2280,6 +2293,7 @@
       state.peekMode = false;
       el.classList.remove('peek-mode');
       document.getElementById('btnPeek').classList.remove('active-peek');
+      if (el.contains(document.activeElement)) document.getElementById('btnTune').focus();
     }
   };
 
@@ -2287,6 +2301,7 @@
     closeLoadoutSheet();
     syncTuningUI();
     document.getElementById('tuneOverlay').classList.add('open');
+    document.getElementById('btnPeek').focus();
   };
 
   window.toggleTunePeek = function() {
@@ -2451,6 +2466,7 @@
     }
 
     updateLiveHUD();
+    if (document.activeElement === canvas) describeKeyboardCell();
 
     // Status strip & chassis aim states
     const strip = document.getElementById('statusStrip');
@@ -3203,6 +3219,9 @@
       });
     }
     motionQuery.addEventListener?.('change', syncPreferencesUI);
+    document.getElementById('tuneOverlay').addEventListener('keydown', e => {
+      if (e.key === 'Escape') { e.preventDefault(); closeModal('tuneOverlay'); }
+    });
     syncPreferencesUI();
     syncTuningUI();
     for (const id of ['statusStrip','relicDeck']) {
