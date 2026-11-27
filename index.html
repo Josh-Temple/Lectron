@@ -2,8 +2,9 @@
 <html lang="ja">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Lectron</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns=%27http://www.w3.org/2000/svg%27 viewBox=%270 0 64 64%27%3E%3Crect width=%2764%27 height=%2764%27 rx=%2712%27 fill=%27%2307090e%27/%3E%3Ccircle cx=%2732%27 cy=%2732%27 r=%2722%27 fill=%27none%27 stroke=%27%2300e5ff%27 stroke-width=%273%27/%3E%3Ccircle cx=%2732%27 cy=%2732%27 r=%2710%27 fill=%27%23ff2e7e%27/%3E%3Ccircle cx=%2732%27 cy=%2732%27 r=%274%27 fill=%27white%27/%3E%3C/svg%3E">
 <style>
   :root {
     --void: #07090e;
@@ -472,7 +473,7 @@
     display: block;
     background: #060910;
     border: 1px solid #0b0f18;
-    touch-action: none;
+    touch-action: pinch-zoom;
     cursor: pointer;
   }
 
@@ -849,6 +850,23 @@
     font-size: 10px;
     font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
   }
+  /* Accessibility: default layout unchanged; short viewports may scroll. */
+  [hidden] { display: none !important; }
+  :focus-visible { outline: 2px solid #fff; outline-offset: 2px; }
+  .sr-only { position:absolute; width:1px; height:1px; padding:0; margin:-1px; overflow:hidden; clip-path:inset(50%); white-space:nowrap; border:0; }
+  .half-sheet:not(.open) { visibility:hidden; }
+  .pref-row { display:flex; align-items:center; gap:8px; font-size:12px; }
+  @media (max-height: 560px), (max-width: 350px) {
+    html, body { overflow:auto; }
+    #app { height:auto; min-height:100dvh; }
+    .board-stage { min-height: min(400px, 100vw); }
+    .top-bar { flex-wrap:wrap; }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after { animation-duration:0.01ms !important; transition-duration:0.01ms !important; }
+  }
+  body.reduce-motion *, body.reduce-motion *::before, body.reduce-motion *::after { animation-duration:0.01ms !important; transition-duration:0.01ms !important; }
+  body.reduce-motion .pulse-beat, body.reduce-motion .relic-slot.proc { transform:none; box-shadow:none; }
 </style>
 </head>
 <body data-mode="tactical">
@@ -863,7 +881,7 @@
     </div>
     <div class="top-actions">
       <div class="coin-badge" id="coinBadge" title="所持コイン">🪙 <span id="valCoins">4</span></div>
-      <button class="icon-btn" onclick="openTuning()" title="ライブチューニング">⚙</button>
+      <button class="icon-btn" id="btnTune" onclick="openTuning()" title="ライブチューニング" aria-label="ライブチューニング">⚙</button>
       <button class="icon-btn" id="btnMute" onclick="toggleMute()" title="音声ミュート">🔊</button>
       <button class="icon-btn" onclick="restartRun()" title="最初からやり直す">↻</button>
     </div>
@@ -921,7 +939,7 @@
   </div>
 
   <!-- Status Strip + Quantum Excitation Scale -->
-  <div class="status-strip" id="statusStrip" onclick="cancelArmedTool()">
+  <div class="status-strip" id="statusStrip" role="button" tabindex="0" aria-label="選択中のツールを解除" onclick="cancelArmedTool()">
     <span id="bannerLeft">電子雲を励起させ臨界から電離連鎖させろ</span>
     <span id="bannerRight"></span>
   </div>
@@ -929,7 +947,9 @@
   <!-- Board Canvas with Accelerator Chamber Bezel -->
   <div class="board-stage" id="boardWrap">
     <div class="board-chassis" id="boardChassis">
-      <canvas id="board"></canvas>
+      <canvas id="board" tabindex="0" aria-label="ゲーム盤面" aria-describedby="boardHelp boardCell"></canvas>
+      <span id="boardHelp" class="sr-only">矢印キーでセルを選択、Enter または Space で実行、Escape でツール解除。</span>
+      <span id="boardCell" class="sr-only" role="status" aria-live="polite"></span>
     </div>
     <div id="cutin">WAVE 2!</div>
   </div>
@@ -937,7 +957,7 @@
   <!-- Thumb Deck (Dynamic Tools & Active Skills + Relic Breach Bar) -->
   <div class="thumb-deck">
     <div class="tool-row" id="toolBar"></div>
-    <div class="relic-deck unlocked" id="relicDeck" onclick="toggleLoadoutSheet()">
+    <div class="relic-deck unlocked" id="relicDeck" role="button" tabindex="0" aria-controls="loadoutSheet" aria-expanded="false" onclick="toggleLoadoutSheet()">
       <div class="relic-deck-head">
         <span class="lock-state"><span class="lock-pin"></span><span id="lockLabel">UNLOCKED · タップで装備入替</span></span>
         <span class="bench-hint" id="slotSummary">装備 0/4 · 控え 0</span>
@@ -948,7 +968,7 @@
 </div>
 
 <!-- Non-Occluding Half-Sheet Loadout Tray -->
-<div class="half-sheet" id="loadoutSheet">
+<div class="half-sheet" id="loadoutSheet" inert>
   <div class="sheet-head">
     <div>
       <div class="sheet-title">LOADOUT TRAY (<span id="eqCount">0/4</span>)</div>
@@ -981,10 +1001,10 @@
 </div>
 
 <!-- Live Tuning Hatch Modal (Original 72KB Params + Peek Mode) -->
-<div class="overlay" id="tuneOverlay">
+<div class="overlay" id="tuneOverlay" role="dialog" aria-labelledby="tuneTitle">
   <div class="modal">
     <div class="modal-head">
-      <div class="modal-title">⚙ LIVE TUNING HATCH</div>
+      <div class="modal-title" id="tuneTitle">⚙ LIVE TUNING HATCH</div>
       <div style="display:flex;gap:5px;">
         <button class="btn-ghost" id="btnPeek" onclick="toggleTunePeek()">👁 透過Peek</button>
         <button class="btn-ghost" onclick="closeModal('tuneOverlay')">閉じる</button>
@@ -1022,14 +1042,20 @@
       </div>
     </div>
     <div class="dev-bench">
-      <div class="sec-lbl">DEV BENCH（デバッグ・設定保存）</div>
-      <div style="display:flex;gap:6px;flex-wrap:wrap;">
+      <div class="sec-lbl">設定・アクセシビリティ</div>
+      <label class="pref-row"><input id="prefNumbers" type="checkbox">残耐久の数字を表示</label>
+      <label class="pref-row"><input id="prefMotion" type="checkbox">演出を軽減（端末設定を優先）</label>
+      <button class="btn-ghost" onclick="resetPreferences()">設定を初期化</button>
+      <div id="debugBench" hidden>
+        <div class="sec-lbl">DEV BENCH（デバッグ専用）</div>
+        <div style="display:flex;gap:6px;flex-wrap:wrap;">
         <button class="btn-amber" onclick="debugUnlockAll()">🔓 全レリック解放</button>
         <button class="btn-amber" onclick="debugAddCoins()">🪙 +50</button>
         <button class="btn-ghost" onclick="debugSkipStage()">⏭ 次面へ</button>
         <button class="btn-ghost" onclick="regenCurrentStage()">🎲 再生成</button>
+        </div>
       </div>
-      <textarea id="jsonBox" placeholder="設定JSON"></textarea>
+      <textarea id="jsonBox" aria-label="チューニング設定JSON" placeholder="設定JSON"></textarea>
       <div style="display:flex;gap:6px;">
         <button class="btn-ghost" onclick="exportTuneJson()">📋 JSON更新</button>
         <button class="btn-primary" onclick="importTuneJson()">📥 JSON適用</button>
@@ -1112,6 +1138,7 @@
 
   let beatTimer = null;
   function pulseChassis() {
+    if (reducedMotion()) return;
     const ch = document.getElementById('boardChassis');
     if (!ch) return;
     ch.classList.add('pulse-beat');
@@ -1204,15 +1231,83 @@
   ];
 
   /* ===== Original 72KB Tuning Config ===== */
-  const tuning = {
-    tacSlots: 4,
-    odSlots: 6,
-    odCurve: 4.5,
-    probMult: 1.0,
-    speedMult: 1.0,
-    assistRate: 65,
-    initBurstLv: 4,
-    refillLvInc: 1
+  const TUNING_SCHEMA = Object.freeze({
+    tacSlots: [4, 2, 12, 1, 'trTacSlots', 'TACTICAL 装備枠数'],
+    odSlots: [6, 2, 12, 1, 'trOdSlots', 'OVERDRIVE 装備枠数'],
+    odCurve: [4.5, 2, 8, 0.5, 'trCurve', 'OVERDRIVE 難易度カーブ'],
+    probMult: [1, 0.5, 2, 0.1, 'trProb', '確率レリック発動補正'],
+    speedMult: [1, 0.5, 2.5, 0.1, 'trSpeed', '電子ビーム移動速度'],
+    assistRate: [65, 0, 100, 5, 'trAssist', 'リフィル進路アシスト率'],
+    initBurstLv: [4, 3, 5, 1, 'trInitLv', '初期電離Lv'],
+    refillLvInc: [1, 0, 2, 1, 'trLvInc', 'リフィル上昇']
+  });
+  function defaultTuning() {
+    return Object.fromEntries(Object.entries(TUNING_SCHEMA).map(([k, v]) => [k, v[0]]));
+  }
+  function validateTuning(obj) {
+    const values = {}, ignored = [], adjusted = [];
+    if (!obj || typeof obj !== 'object' || Array.isArray(obj)) return { values, ignored, adjusted, invalidRoot: true };
+    for (const [key, raw] of Object.entries(obj)) {
+      if (!Object.hasOwn(TUNING_SCHEMA, key)) { ignored.push(key); continue; }
+      if (typeof raw !== 'number' && !(typeof raw === 'string' && /^[+-]?(?:\d+(?:\.\d*)?|\.\d+)(?:e[+-]?\d+)?$/i.test(raw.trim()))) {
+        ignored.push(key); continue;
+      }
+      const n = Number(raw);
+      if (!Number.isFinite(n)) { ignored.push(key); continue; }
+      const [, min, max, step] = TUNING_SCHEMA[key];
+      const bounded = Math.max(min, Math.min(max, n));
+      const v = Number((min + Math.round((bounded - min) / step) * step).toFixed(8));
+      values[key] = v;
+      if (v !== n) adjusted.push(key);
+    }
+    return { values, ignored, adjusted, invalidRoot: false };
+  }
+  const tuning = defaultTuning();
+  const preferences = { numbers: false, reduceMotion: false };
+  const storageKey = 'lectron.preferences.v1:' + location.pathname;
+  const debugEnabled = new URLSearchParams(location.search).get('debug') === '1';
+  const motionQuery = window.matchMedia('(prefers-reduced-motion: reduce)');
+  function reducedMotion() { return preferences.reduceMotion || motionQuery.matches; }
+  function loadPreferences() {
+    try {
+      const saved = JSON.parse(localStorage.getItem(storageKey) || 'null');
+      if (!saved || saved.version !== 1) return;
+      Object.assign(tuning, validateTuning(saved.tuning).values);
+      if (typeof saved.muted === 'boolean') AudioSys.muted = saved.muted;
+      for (const key of Object.keys(preferences)) {
+        if (typeof saved.preferences?.[key] === 'boolean') preferences[key] = saved.preferences[key];
+      }
+    } catch (_) { /* Storage unavailable or malformed; defaults remain usable. */ }
+  }
+  function savePreferences() {
+    try {
+      localStorage.setItem(storageKey, JSON.stringify({ version: 1, tuning, muted: AudioSys.muted, preferences }));
+      return true;
+    } catch (_) { return false; }
+  }
+  function syncPreferencesUI() {
+    document.getElementById('prefNumbers').checked = preferences.numbers;
+    document.getElementById('prefMotion').checked = preferences.reduceMotion;
+    document.getElementById('btnMute').textContent = AudioSys.muted ? '🔇' : '🔊';
+    document.getElementById('btnMute').setAttribute('aria-pressed', String(AudioSys.muted));
+    document.body.classList.toggle('reduce-motion', reducedMotion());
+  }
+  function saveOrWarn() {
+    if (!savePreferences()) showToast('設定を端末に保存できません（このページ内では適用済み）', '#ffb020');
+  }
+  function afterTuningChange() {
+    if (mode === 'overdrive') state.targetScore = calcOverdriveTarget(state.stage);
+    syncTuningUI();
+    updateUI();
+  }
+  window.resetPreferences = function() {
+    Object.assign(tuning, defaultTuning());
+    preferences.numbers = false;
+    preferences.reduceMotion = false;
+    AudioSys.muted = false;
+    syncPreferencesUI();
+    afterTuningChange();
+    saveOrWarn();
   };
 
   /* ===== Original 72KB Game State ===== */
@@ -1281,13 +1376,14 @@
   const canvas = document.getElementById('board');
   const ctx = canvas.getContext('2d');
   let boardPx = 340;
+  let keyboardCell = { r: 0, c: 0 };
 
   function resizeCanvas() {
     const wrap = document.getElementById('boardWrap');
     const w = wrap ? wrap.clientWidth - 20 : window.innerWidth - 30;
     const h = wrap ? wrap.clientHeight - 30 : window.innerHeight - 290;
     let size = Math.floor(Math.min(w, h, 430));
-    if (!Number.isFinite(size) || size < 210) size = Math.min(336, Math.max(220, window.innerWidth - 30));
+    if (!Number.isFinite(size) || size < 210) size = Math.min(336, Math.max(140, window.innerWidth - 30), Math.max(140, w));
     boardPx = size;
     const dpr = Math.min(window.devicePixelRatio || 1, 2);
     canvas.style.width = size + 'px';
@@ -1361,10 +1457,10 @@
     };
   }
 
-  function calcOverdriveTarget(stage) {
+  function calcOverdriveTarget(stage, curve = tuning.odCurve) {
     const area = Math.floor((stage - 1) / 3);
     const sub = (stage - 1) % 3;
-    const base = 420 * Math.pow(tuning.odCurve, area);
+    const base = 420 * Math.pow(curve, area);
     const subMult = sub === 0 ? 1.0 : sub === 1 ? 1.7 : 2.6;
     return Math.round((base * subMult) / 10) * 10;
   }
@@ -1539,6 +1635,7 @@
     }
 
     populateGrid(false);
+    clampKeyboardCell();
     updateUI();
   }
 
@@ -1863,15 +1960,51 @@
   }
 
   /* ===== Input Handling (Original 72KB Tools + Skills) ===== */
-  canvas.addEventListener('pointerdown', (e) => {
+  function clampKeyboardCell() {
+    keyboardCell.r = Math.max(0, Math.min(state.gridSize - 1, keyboardCell.r));
+    keyboardCell.c = Math.max(0, Math.min(state.gridSize - 1, keyboardCell.c));
+  }
+  function describeKeyboardCell() {
+    clampKeyboardCell();
+    const {r, c} = keyboardCell;
+    const d = grid[r]?.[c];
+    const content = d ? '残耐久 ' + Math.max(1, d.burstLv - d.lv) + '、' + d.type + (d.frozen ? '、凍結' : '') + (d.armor ? '、装甲 ' + d.armor : '') : bumpers[r]?.[c] ? '偏向板 ' + bumpers[r][c] : '空き';
+    document.getElementById('boardCell').textContent = (r+1) + '行 ' + (c+1) + '列、' + content + (state.busy ? '、連鎖中' : '');
+  }
+  canvas.addEventListener('focus', describeKeyboardCell);
+  canvas.addEventListener('keydown', e => {
+    const directions = { ArrowUp: [-1,0], ArrowDown:[1,0], ArrowLeft:[0,-1], ArrowRight:[0,1] };
+    if (Object.hasOwn(directions, e.key)) {
+      e.preventDefault();
+      keyboardCell.r += directions[e.key][0]; keyboardCell.c += directions[e.key][1];
+      describeKeyboardCell();
+    } else if (e.key === 'Enter' || e.key === ' ') {
+      e.preventDefault();
+      if (!e.repeat) { activateCell(keyboardCell.r, keyboardCell.c); describeKeyboardCell(); }
+    } else if (e.key === 'Escape') { e.preventDefault(); cancelArmedTool(); describeKeyboardCell(); }
+  });
+  // Commit taps on release; multi-touch, dragging or browser pinch cancels.
+  let pointerTap = null;
+  canvas.addEventListener('pointerdown', e => {
+    if (!e.isPrimary || e.button !== 0) { pointerTap = null; return; }
+    pointerTap = { id:e.pointerId, x:e.clientX, y:e.clientY };
+  });
+  canvas.addEventListener('pointermove', e => {
+    if (pointerTap?.id === e.pointerId && Math.hypot(e.clientX-pointerTap.x,e.clientY-pointerTap.y)>12) pointerTap=null;
+  });
+  canvas.addEventListener('pointercancel', () => { pointerTap=null; });
+  canvas.addEventListener('pointerleave', () => { pointerTap=null; });
+  canvas.addEventListener('pointerup', e => {
+    if (!pointerTap || pointerTap.id !== e.pointerId) return;
+    pointerTap=null;
+    const rect = canvas.getBoundingClientRect();
+    const c = Math.floor((e.clientX - rect.left) / rect.width * state.gridSize);
+    const r = Math.floor((e.clientY - rect.top) / rect.height * state.gridSize);
+    activateCell(r, c);
+  });
+  function activateCell(r, c) {
     AudioSys.init();
     if (state.busy || state.stageCleared || state.runOver) return;
-    const rect = canvas.getBoundingClientRect();
-    const x = e.clientX - rect.left;
-    const y = e.clientY - rect.top;
-    const cellSz = boardPx / state.gridSize;
-    const c = Math.floor(x / cellSz);
-    const r = Math.floor(y / cellSz);
     if (r < 0 || r >= state.gridSize || c < 0 || c >= state.gridSize) return;
 
     if (state.activeTool === 'swap') {
@@ -1950,7 +2083,7 @@
       finishTurn();
     }
     updateUI();
-  });
+  }
 
   function beginTapSequence(spendTap) {
     state.tappedThisStage = true;
@@ -1978,10 +2111,18 @@
 
   /* ===== Shop (Original 72KB Logic) ===== */
   let shopOffers = [];
+  function shuffle(array, rng = Math.random) {
+    const result = array.slice();
+    for (let i = result.length - 1; i > 0; i--) {
+      const j = Math.floor(rng() * (i + 1));
+      [result[i], result[j]] = [result[j], result[i]];
+    }
+    return result;
+  }
   function generateShopOffers() {
     shopOffers = [];
     const cat = relicCatalog().filter(r => !curInv().owned.includes(r.id));
-    const shuffled = [...cat].sort(() => Math.random() - 0.5);
+    const shuffled = shuffle(cat);
     shuffled.slice(0, 3).forEach(r => shopOffers.push({ kind: 'relic', item: r, bought: false }));
 
     if (mode === 'overdrive') {
@@ -2070,14 +2211,20 @@
   window.toggleLoadoutSheet = function() {
     const sheet = document.getElementById('loadoutSheet');
     if (sheet.classList.contains('open')) {
-      sheet.classList.remove('open');
+      closeLoadoutSheet();
     } else {
       renderLoadout();
       sheet.classList.add('open');
+      sheet.inert = false;
+      document.getElementById('relicDeck').setAttribute('aria-expanded', 'true');
     }
   };
   window.closeLoadoutSheet = function() {
-    document.getElementById('loadoutSheet').classList.remove('open');
+    const sheet = document.getElementById('loadoutSheet');
+    if (sheet.contains(document.activeElement)) document.getElementById('relicDeck').focus();
+    sheet.classList.remove('open');
+    sheet.inert = true;
+    document.getElementById('relicDeck').setAttribute('aria-expanded', 'false');
   };
 
   function renderLoadout() {
@@ -2129,13 +2276,14 @@
       };
       bnBox.appendChild(div);
     });
-    if (bench.length === 0) bnBox.innerHTML = '<div style="font-size:11px;color:var(--mute)">控えなし（ショップまたは⚙全解放で追加）</div>';
+    if (bench.length === 0) bnBox.innerHTML = '<div style="font-size:11px;color:var(--mute)">控えなし（ショップで追加）</div>';
   }
 
   /* ===== Live Tuning Hatch (Original 72KB Params + Peek) ===== */
   window.toggleMute = function() {
     AudioSys.muted = !AudioSys.muted;
-    document.getElementById('btnMute').textContent = AudioSys.muted ? '🔇' : '🔊';
+    syncPreferencesUI();
+    saveOrWarn();
   };
 
   window.closeModal = function(id) {
@@ -2145,6 +2293,7 @@
       state.peekMode = false;
       el.classList.remove('peek-mode');
       document.getElementById('btnPeek').classList.remove('active-peek');
+      if (el.contains(document.activeElement)) document.getElementById('btnTune').focus();
     }
   };
 
@@ -2152,6 +2301,7 @@
     closeLoadoutSheet();
     syncTuningUI();
     document.getElementById('tuneOverlay').classList.add('open');
+    document.getElementById('btnPeek').focus();
   };
 
   window.toggleTunePeek = function() {
@@ -2180,20 +2330,14 @@
   }
 
   window.applyTune = function() {
-    tuning.tacSlots = parseInt(document.getElementById('trTacSlots').value, 10);
-    tuning.odSlots = parseInt(document.getElementById('trOdSlots').value, 10);
-    tuning.odCurve = parseFloat(document.getElementById('trCurve').value);
-    tuning.probMult = parseFloat(document.getElementById('trProb').value);
-    tuning.speedMult = parseFloat(document.getElementById('trSpeed').value);
-    tuning.assistRate = parseInt(document.getElementById('trAssist').value, 10);
-    tuning.initBurstLv = parseInt(document.getElementById('trInitLv').value, 10);
-    tuning.refillLvInc = parseInt(document.getElementById('trLvInc').value, 10);
-    if (mode === 'overdrive') state.targetScore = calcOverdriveTarget(state.stage);
-    syncTuningUI();
-    updateUI();
+    const raw = Object.fromEntries(Object.entries(TUNING_SCHEMA).map(([key, v]) => [key, document.getElementById(v[4]).value]));
+    Object.assign(tuning, validateTuning(raw).values);
+    afterTuningChange();
+    saveOrWarn();
   };
 
   window.debugUnlockAll = function() {
+    if (!debugEnabled) return;
     const inv = curInv();
     relicCatalog().forEach(r => { if (!inv.owned.includes(r.id)) inv.owned.push(r.id); });
     showToast('🔓 全レリックを控えライブラリへ追加しました', '#00e58b');
@@ -2201,6 +2345,7 @@
   };
 
   window.debugAddCoins = function() {
+    if (!debugEnabled) return;
     state.coins += 50;
     pulseCoin();
     showToast('+50🪙 付与しました', '#ffb020');
@@ -2208,12 +2353,14 @@
   };
 
   window.debugSkipStage = function() {
+    if (!debugEnabled) return;
     closeModal('tuneOverlay');
     state.stage++;
     startStage(false);
   };
 
   window.regenCurrentStage = function() {
+    if (!debugEnabled) return;
     closeModal('tuneOverlay');
     startStage(false);
   };
@@ -2224,16 +2371,16 @@
   };
 
   window.importTuneJson = function() {
-    try {
-      const obj = JSON.parse(document.getElementById('jsonBox').value);
-      Object.assign(tuning, obj);
-      if (mode === 'overdrive') state.targetScore = calcOverdriveTarget(state.stage);
-      syncTuningUI();
-      updateUI();
-      showToast('📥 設定JSONを適用しました', '#00e58b');
-    } catch (_) {
-      showToast('⚠️ JSON形式エラー', '#ff2e7e');
-    }
+    let obj;
+    try { obj = JSON.parse(document.getElementById('jsonBox').value); }
+    catch (_) { showToast('⚠️ JSON構文エラー', '#ff2e7e'); return; }
+    const result = validateTuning(obj);
+    if (result.invalidRoot) { showToast('⚠️ 設定値エラー：JSONオブジェクトが必要です', '#ff2e7e'); return; }
+    Object.assign(tuning, result.values);
+    afterTuningChange();
+    const detail = [result.ignored.length ? '無視 ' + result.ignored.length + '件' : '', result.adjusted.length ? '補正 ' + result.adjusted.length + '件' : ''].filter(Boolean).join(' / ');
+    const saved = savePreferences();
+    showToast('設定JSONを適用' + (detail ? '（' + detail + '）' : '') + (saved ? '' : '・保存不可'), detail || !saved ? '#ffb020' : '#00e58b');
   };
 
   /* ===== Live HUD Sync ===== */
@@ -2319,6 +2466,7 @@
     }
 
     updateLiveHUD();
+    if (document.activeElement === canvas) describeKeyboardCell();
 
     // Status strip & chassis aim states
     const strip = document.getElementById('statusStrip');
@@ -2373,7 +2521,7 @@
       const armedCls = state.activeTool === tid ? (tid === 'blast' ? ' armed-boom' : ' armed-swap') : '';
       btn.className = 'tool-btn' + armedCls;
       btn.textContent = `${t.icon} ${t.name}`;
-      btn.onclick = () => {
+      btn.onclick = e => {
         if (state.busy) return;
         if (tid === 'mirror') {
           state.mirrorShieldActive = true;
@@ -2385,6 +2533,7 @@
           state.swapFirst = null;
           updateUI();
         }
+        if (e.detail === 0) canvas.focus();
       };
       tBar.appendChild(btn);
     });
@@ -2394,11 +2543,12 @@
       btn.className = 'tool-btn skill-btn' + (state.activeTool === 'phase_shift' ? ' armed-swap' : '');
       btn.textContent = '🔄 方向切替' + (state.phaseShiftUsed ? '(済)' : '');
       btn.disabled = state.phaseShiftUsed;
-      btn.onclick = () => {
+      btn.onclick = e => {
         if (state.busy || state.phaseShiftUsed) return;
         state.activeTool = state.activeTool === 'phase_shift' ? null : 'phase_shift';
         state.swapFirst = null;
         updateUI();
+        if (e.detail === 0) canvas.focus();
       };
       tBar.appendChild(btn);
     }
@@ -2407,11 +2557,12 @@
       btn.className = 'tool-btn skill-btn' + (state.activeTool === 'push_one' ? ' armed-swap' : '');
       btn.textContent = '👆 1マス移動' + (state.pushUsed ? '(済)' : '');
       btn.disabled = state.pushUsed;
-      btn.onclick = () => {
+      btn.onclick = e => {
         if (state.busy || state.pushUsed) return;
         state.activeTool = state.activeTool === 'push_one' ? null : 'push_one';
         state.swapFirst = null;
         updateUI();
+        if (e.detail === 0) canvas.focus();
       };
       tBar.appendChild(btn);
     }
@@ -2694,13 +2845,15 @@
     ctx.save();
     ctx.clearRect(0, 0, boardPx, boardPx);
     if (state.shake > 0.2) {
-      ctx.translate((Math.random() - 0.5) * state.shake, (Math.random() - 0.5) * state.shake);
+      const dx = (Math.random() - 0.5) * state.shake, dy = (Math.random() - 0.5) * state.shake;
+      if (!reducedMotion()) ctx.translate(dx, dy);
     }
 
     const size = state.gridSize;
     const cs = boardPx / size;
     const isOvd = mode === 'overdrive';
-    const tSec = ts * 0.001;
+    const quiet = reducedMotion();
+    const tSec = quiet ? 0 : ts * 0.001;
 
     // 1. Recessed Dark Accelerator Cell Floor
     ctx.fillStyle = isOvd ? '#100916' : '#0a101b';
@@ -2720,7 +2873,7 @@
     if (isOvd && state.bossMod && state.bossMod.id === 'wind') {
       ctx.strokeStyle = 'rgba(255, 176, 32, 0.2)';
       ctx.lineWidth = 1.5;
-      const offset = (ts * 0.09) % 48;
+      const offset = quiet ? 0 : (ts * 0.09) % 48;
       ctx.beginPath();
       for (let row = 0; row < size; row++) {
         const y = (row + 0.5) * cs;
@@ -2803,15 +2956,15 @@
         const key = getCloudKey(rem, d.type);
         const hex = getCloudHex(key);
 
-        const bounce = d.pulse > 0 ? Math.sin(d.pulse * Math.PI * 2.5) * d.pulse * 0.18 : 0;
-        const breathe = d.frozen ? 0 : Math.sin(tSec * (rem <= 1 ? 7.5 : (rem === 2 ? 4.2 : 2.2)) + (d.phase || 0)) * (rem <= 1 ? 0.055 : 0.03);
+        const bounce = !quiet && d.pulse > 0 ? Math.sin(d.pulse * Math.PI * 2.5) * d.pulse * 0.18 : 0;
+        const breathe = d.frozen || quiet ? 0 : Math.sin(tSec * (rem <= 1 ? 7.5 : (rem === 2 ? 4.2 : 2.2)) + (d.phase || 0)) * (rem <= 1 ? 0.055 : 0.03);
         // Cloud spatial radius expands clearly with excitation (1s -> 2s -> 3s -> critical ionization)
         const baseScale = rem >= 5 ? 0.25 : (rem === 4 ? 0.30 : (rem === 3 ? 0.37 : (rem === 2 ? 0.44 : 0.52)));
         const cloudR = cs * (baseScale + breathe) * (1 + bounce) * d.scale;
 
         let x = (c + 0.5) * cs;
         let y = (r + 0.5) * cs;
-        if (rem === 1 && !d.frozen) {
+        if (rem === 1 && !d.frozen && !quiet) {
           x += Math.sin(ts * 0.042 + r * 3 + c) * 1.1;
           y += Math.cos(ts * 0.048 + c * 2) * 1.1;
         }
@@ -2865,7 +3018,7 @@
         ctx.fillStyle = rem === 1 ? '#ffffff' : hex;
         for (let k = 0; k < dotCount; k++) {
           const sm = CLOUD_SAMPLES[k];
-          const flicker = d.frozen ? 0.55 : (0.5 + 0.5 * Math.sin(phaseBase + sm.ph + (d.phase || 0)));
+          const flicker = d.frozen || quiet ? 0.55 : (0.5 + 0.5 * Math.sin(phaseBase + sm.ph + (d.phase || 0)));
           if (flicker < 0.22) continue;
           const dr = sm.r * spread;
           // Rotate sample field slowly for organic probability cloud drift
@@ -3015,6 +3168,26 @@
       }
     }
 
+    if (preferences.numbers) {
+      ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+      ctx.font = 'bold ' + Math.max(11, Math.floor(cs * 0.29)) + 'px sans-serif';
+      ctx.strokeStyle = '#07090e'; ctx.fillStyle = '#fff'; ctx.lineWidth = 4;
+      for (let r=0;r<size;r++) for (let c=0;c<size;c++) {
+        const d=grid[r][c]; if (!d) continue;
+        const label=String(Math.max(1,d.burstLv-d.lv));
+        ctx.strokeText(label,(c+0.5)*cs,(r+0.5)*cs);
+        ctx.fillText(label,(c+0.5)*cs,(r+0.5)*cs);
+      }
+      ctx.textBaseline = 'alphabetic';
+    }
+    if (document.activeElement === canvas) {
+      clampKeyboardCell();
+      ctx.strokeStyle='#07090e'; ctx.lineWidth=5;
+      ctx.strokeRect(keyboardCell.c*cs+4,keyboardCell.r*cs+4,cs-8,cs-8);
+      ctx.strokeStyle='#fff'; ctx.lineWidth=2;
+      ctx.strokeRect(keyboardCell.c*cs+4,keyboardCell.r*cs+4,cs-8,cs-8);
+    }
+
     // 7. Floaters
     ctx.textAlign = 'center';
     ctx.lineWidth = 3;
@@ -3033,6 +3206,30 @@
 
   /* ===== Boot ===== */
   function boot() {
+    loadPreferences();
+    for (const [, min, max, step, id, label] of Object.values(TUNING_SCHEMA)) {
+      const input = document.getElementById(id);
+      input.min = min; input.max = max; input.step = step;
+      input.setAttribute('aria-label', label);
+    }
+    document.getElementById('debugBench').hidden = !debugEnabled;
+    for (const [id,key] of [['prefNumbers','numbers'],['prefMotion','reduceMotion']]) {
+      document.getElementById(id).addEventListener('change', e => {
+        preferences[key] = e.target.checked; syncPreferencesUI(); saveOrWarn();
+      });
+    }
+    motionQuery.addEventListener?.('change', syncPreferencesUI);
+    document.getElementById('tuneOverlay').addEventListener('keydown', e => {
+      if (e.key === 'Escape') { e.preventDefault(); closeModal('tuneOverlay'); }
+    });
+    syncPreferencesUI();
+    syncTuningUI();
+    for (const id of ['statusStrip','relicDeck']) {
+      const el = document.getElementById(id);
+      el.addEventListener('keydown', e => {
+        if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); if (!e.repeat) el.click(); }
+      });
+    }
     resizeCanvas();
     startStage(true);
     requestAnimationFrame(loop);
