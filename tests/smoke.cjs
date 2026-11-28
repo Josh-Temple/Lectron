@@ -19,8 +19,18 @@ assert.equal(api.validateTuning(null).invalidRoot,true);
 assert.deepEqual(api.validateTuning({speedMult:'1.2',probMult:'2e0'}).values,{speedMult:1.2,probMult:2});
 assert.equal(api.validateTuning({probMult:' ',speedMult:Infinity,odSlots:'0x10'}).ignored.length,3);
 for(const curve of [2,4.5,8]) for(let stage=1;stage<=30;stage++){
-  const expected=Math.round(420*curve**Math.floor((stage-1)/3)*[1,1.7,2.6][(stage-1)%3]/10)*10;
-  assert.equal(api.calcOverdriveTarget(stage,curve),expected);
+  const oldTarget = Math.round(420 * curve ** Math.floor((stage - 1) / 3) * [1, 1.7, 2.6][(stage - 1) % 3] / 10) * 10;
+  const actual = api.calcOverdriveTarget(stage,curve);
+  if (stage <= 9) assert.equal(actual, oldTarget);
+  else assert.ok(actual > oldTarget);
+  if (stage > 9) assert.ok(actual > api.calcOverdriveTarget(stage - 1, curve));
+}
+for (const curve of [2, 4.5, 8]) {
+  const areaGrowth = (stage) => api.calcOverdriveTarget(stage + 3, curve) / api.calcOverdriveTarget(stage, curve);
+  assert.ok(areaGrowth(18) > areaGrowth(9));
+  assert.ok(areaGrowth(39) > areaGrowth(18) * 3);
+  assert.ok(Number.isFinite(api.calcOverdriveTarget(100, curve)));
+  assert.equal(api.calcOverdriveTarget(999, curve), 1e300);
 }
 const original=[1,2,3]; assert.deepEqual(api.shuffle(original,()=>0),[2,3,1]); assert.deepEqual(original,[1,2,3]);
 assert.deepEqual(api.shuffle(original,()=>0.999),original);
@@ -33,7 +43,7 @@ for(const fn of ['debugUnlockAll','debugAddCoins','debugSkipStage','regenCurrent
 assert.ok(html.includes('id="debugBench" hidden'));
 assert.ok(script.includes("get('debug') === '1'"));
 assert.ok(script.includes('if (droplets.length >= 80) return;'));
-assert.ok(script.includes('state.waveMult = 2.5;')&&script.includes('state.waveMult = 5.0;')&&script.includes('state.waveMult = 10.0;')&&script.includes('state.waveMult = 20.0;')&&script.includes('state.waveMult *= 2.0;'));
+assert.ok(script.includes('state.waveMult = 2.5;')&&script.includes('state.waveMult = 5.0;')&&script.includes('state.waveMult = 10.0;')&&script.includes('state.waveMult = 20.0;'));
 assert.ok(script.includes('state.rerollCost = 2;')&&script.includes('state.rerollCost++;'));
 assert.ok(!script.includes('sort(() => Math.random() - 0.5)'));
 assert.ok(!html.includes('user-scalable=no'));

@@ -2,7 +2,7 @@
 const assert=require('node:assert/strict'),fs=require('node:fs'),path=require('node:path');
 const html=fs.readFileSync(path.join(__dirname,'..','index.html'),'utf8');
 const script=html.match(/<script>([\s\S]*?)<\/script>/)[1];
-const injected=script.replace('  else boot();\n})();','  else boot();\n  window.test={state,tuning,preferences,records,AudioSys,getGrid:()=>grid,drawBoard,loop,hitCell,burstCell,onGameOver,openShop,spawnDroplet,getDroplets:()=>droplets,triggerEscalationRefill,generateShopOffers,getOffers:()=>shopOffers,getMode:()=>mode,getRoute:()=>tacticalRoute,selectTacticalCard,resolveTacticalEvent,chooseTacticalBlessing,onStageClear,finishTurn,makeDrop,createEmptyBoard,getBumpers:()=>bumpers,activateCell,applyTacticalAnomalies,saveRunState};\n})();');
+const injected=script.replace('  else boot();\n})();','  else boot();\n  window.test={state,tuning,preferences,records,AudioSys,getGrid:()=>grid,drawBoard,loop,hitCell,burstCell,onGameOver,openShop,spawnDroplet,getDroplets:()=>droplets,triggerEscalationRefill,generateShopOffers,getOffers:()=>shopOffers,getMode:()=>mode,getRoute:()=>tacticalRoute,selectTacticalCard,resolveTacticalEvent,chooseTacticalBlessing,onStageClear,finishTurn,makeDrop,createEmptyBoard,getBumpers:()=>bumpers,activateCell,applyTacticalAnomalies,saveRunState,startStage,stepChain,playbackTempo,rollOverdriveRelics,shopPrice,OVERDRIVE_RELICS,overdriveAssistRate,overdriveRefillInc,overdriveHazards,MAX_OVERDRIVE_REFILLS};\n})();');
 assert.ok(injected!==script);
 function launch({search='',saved=new Map(),blocked=false,reduced=false,rng=()=>0.5}={}){
   const byId=new Map();let document,clip='';
@@ -66,7 +66,7 @@ resumed.w.restartRun();
 const afterReset=launch({saved:resumed.saved});
 assert.equal(afterReset.t.state.stage,1);assert.equal(afterReset.t.state.coins,4);
 debug.w.switchMode('overdrive');
-for(const [wave,size,lv,mult] of [[2,6,5,2.5],[3,7,5,5],[4,7,6,10],[5,8,7,20],[6,8,8,40]]){debug.t.triggerEscalationRefill();assert.deepEqual([debug.t.state.wave,debug.t.state.gridSize,debug.t.state.burstLv,debug.t.state.waveMult],[wave,size,lv,mult]);}
+for(const [wave,size,lv,mult] of [[2,6,5,2.5],[3,7,5,5],[4,7,6,10],[5,8,8,20],[6,8,10,40]]){debug.t.triggerEscalationRefill();assert.deepEqual([debug.t.state.wave,debug.t.state.gridSize,debug.t.state.burstLv,debug.t.state.waveMult],[wave,size,lv,mult]);}
 assert.ok(debug.t.state.hitstop>=0.02&&debug.t.state.hitstop<=0.035);
 const redEnv=launch({reduced:true});redEnv.w.switchMode('overdrive');redEnv.t.triggerEscalationRefill();assert.equal(redEnv.t.state.hitstop,0);
 for(let i=0;i<100;i++)debug.t.spawnDroplet(0,0,1,0);assert.equal(debug.t.getDroplets().length,80);
@@ -215,7 +215,7 @@ assert.ok(mirror.t.getDroplets().every(d=>d.bouncesLeft === 2));
 const cooled = scenario('cooling');
 cooled.t.getGrid()[0][0] = cooled.t.makeDrop(3,4);
 cooled.t.finishTurn();
-assert.equal(cooled.t.getGrid()[0][0].lv,1);
+assert.equal(cooled.t.getGrid()[0][0].lv,2);
 const gap = scenario('gap');
 assert.ok(gap.t.getGrid()[3].every(d=>d === null));
 assert.ok(gap.t.getGrid().every(row=>row[3] === null));
@@ -312,3 +312,244 @@ assert.equal(migrated.t.getRoute().open.length,3);
 assert.equal(migrated.t.getRoute().deck.length,5);
 
 console.log('PASS: TACTICAL card retention, events, six anomalies, combined boss, blessings, endless depth and save migration');
+function overdrive(relics = [], rng = () => 0.5) {
+  const run = launch({ rng });
+  run.w.switchMode('overdrive');
+  run.t.state.inv.overdrive.owned = relics.slice();
+  run.t.state.inv.overdrive.equipped = relics.slice();
+  return run;
+}
+
+// Interest uses the pre-clear balance. Normal clears pay no residual-pulse bonus.
+for (const [coins, interest] of [[4,0],[5,1],[24,4],[25,5],[60,5]]) {
+  const run = overdrive();
+  run.t.state.coins = coins;
+  run.t.onStageClear();
+  run.t.onStageClear();
+  assert.equal(run.t.state.coins, coins + 4 + interest);
+  assert.ok(run.el('cutin').textContent.includes(`利子 +${interest}🪙`));
+}
+const saving = overdrive(['saver_wallet', 'compound_interest', 'pulse_cashout']);
+saving.t.state.coins = 55;
+saving.t.onStageClear();
+assert.equal(saving.t.state.coins, 55 + 4 + 10 + 2 * 5);
+saving.t.openShop(4, 10, 10);
+const recovered = launch({ saved: saving.saved });
+assert.match(recovered.el('shopSummary').textContent, /利子 \+10.*換金 \+10/);
+assert.match(recovered.el('shopExit').textContent, /倹約 \+7/);
+recovered.w.nextStageFromShop();
+recovered.w.nextStageFromShop();
+assert.equal(recovered.t.state.coins, 86);
+for (const spend of ['purchase', 'reroll']) {
+  const run = overdrive();
+  run.t.state.coins = 50;
+  run.t.openShop();
+  if (spend === 'purchase') run.el('shopItems').children[0].querySelector('button').click();
+  else run.w.rerollShop();
+  assert.doesNotMatch(run.el('shopExit').textContent, /倹約/);
+  const next = launch({ saved: run.saved });
+  next.w.nextStageFromShop();
+  assert.equal(next.t.state.coins, run.t.state.coins);
+}
+const lowGold = overdrive();
+lowGold.t.state.coins = 0;
+lowGold.t.openShop();
+lowGold.w.rerollShop();
+lowGold.el('shopItems').children[0].querySelector('button').click();
+lowGold.w.nextStageFromShop();
+assert.equal(lowGold.t.state.coins, 3);
+
+const market = overdrive(['black_market'], () => 0.1);
+market.t.openShop();
+const marketCatalog = market.t.OVERDRIVE_RELICS;
+const marketOffers = market.t.getOffers();
+const mythic = marketOffers.find(o => o.item.rarity === 'mythic');
+assert.ok(mythic);
+assert.equal(marketOffers.filter(o => o.item.rarity === 'mythic').length, 1);
+assert.ok(market.el('shopItems').children[2].innerHTML.includes('MYTHIC'));
+assert.ok(market.el('shopItems').children[2].className.includes('rarity-mythic'));
+assert.equal(market.t.shopPrice(mythic), Math.ceil(mythic.item.cost * 1.25));
+assert.equal(market.t.shopPrice(marketOffers.at(-1)), 4);
+const marketRestored = launch({ saved: market.saved });
+assert.deepEqual(marketRestored.t.getOffers().map(marketRestored.t.shopPrice), marketOffers.map(market.t.shopPrice));
+const ordinaryCatalog = overdrive().t;
+assert.equal(marketCatalog.length, 23);
+for (const item of marketCatalog) {
+  const [min,max] = {common:[4,6],rare:[10,14],mythic:[22,30]}[item.rarity || 'common'];
+  assert.ok(item.cost >= min && item.cost <= max && item.role);
+}
+for (const [roll, expected] of [[0.07,true],[0.08,false],[0.1,false]]) {
+  assert.equal(ordinaryCatalog.rollOverdriveRelics(marketCatalog, () => roll).some(r => r.rarity === 'mythic'), expected);
+}
+assert.equal(market.t.rollOverdriveRelics(marketCatalog, () => 0.16).some(r => r.rarity === 'mythic'), false);
+
+const waves = overdrive(['overload_reactor', 'wave_dividend', 'extreme_inflation']);
+const initialRefill = waves.t.state.coins;
+const count = (t, predicate) => t.getGrid().flat().filter(d => d && predicate(d)).length;
+waves.t.triggerEscalationRefill();
+assert.equal(count(waves.t, d => d.frozen), 4);
+assert.equal(count(waves.t, d => d.armor), 0);
+assert.equal(waves.t.state.waveMult, 3.25);
+waves.t.triggerEscalationRefill();
+assert.equal(waves.t.state.coins, initialRefill + 5);
+assert.equal(waves.t.state.reactorMult, 1.25 ** 2);
+assert.equal(waves.t.state.waveMult, 7);
+const wave3Ice = count(waves.t, d => d.frozen);
+const wave3Armor = count(waves.t, d => d.armor);
+waves.t.triggerEscalationRefill();
+assert.ok(count(waves.t, d => d.frozen) > wave3Ice);
+assert.ok(count(waves.t, d => d.armor) > wave3Armor);
+waves.t.triggerEscalationRefill();
+assert.ok(count(waves.t, () => true) < 64 && waves.t.getBumpers().flat().some(Boolean));
+assert.equal(waves.t.state.burstLv, 8);
+assert.equal(waves.t.state.coins, initialRefill + 5);
+waves.t.openShop();
+assert.equal(launch({ saved: waves.saved }).t.state.reactorMult, 1.25 ** 4);
+const range = overdrive([], () => 0.1);
+range.t.state.wave = 5;
+range.t.createEmptyBoard(6);
+range.t.spawnDroplet(2,0,1,0,{ pierce: true });
+assert.ok(Number.isFinite(range.t.getDroplets()[0].rangeLeft));
+range.t.stepChain(0.02, 0.01);
+assert.ok(range.t.getDroplets()[0].rangeLeft > 0);
+for (let i = 0; i < 40 && range.t.getDroplets().length; i++) range.t.stepChain(0.02, 0.02);
+assert.equal(range.t.getDroplets().length, 0);
+
+const tempo = overdrive();
+tempo.t.state.busy = true;
+for (const [refills, speed] of [[0,1],[2,1.6],[4,2.4],[6,3.2],[10,3.2]]) {
+  tempo.t.state.refillsThisTap = refills;
+  assert.equal(tempo.t.playbackTempo(), speed);
+}
+const tempoBoard = tempo.el('board');
+tempoBoard.emit('pointerdown', point);
+assert.equal(tempo.t.playbackTempo(), 3.2 * 3);
+tempoBoard.emit('pointercancel', point);
+assert.equal(tempo.t.playbackTempo(), 3.2);
+tempoBoard.emit('pointerdown', point);
+tempoBoard.emit('pointerup', point);
+assert.equal(tempo.t.playbackTempo(), 3.2);
+
+const fast = overdrive();
+fast.t.createEmptyBoard(6);
+fast.t.getGrid()[3][1] = fast.t.makeDrop(1, 7);
+fast.t.getGrid()[3][5] = fast.t.makeDrop(1, 7);
+fast.t.tuning.speedMult = 2.5;
+fast.t.state.refillsThisTap = 6;
+fast.t.state.chainCount = 60;
+fast.t.state.busy = true;
+fast.t.spawnDroplet(3, 0, 1, 0);
+fast.el('board').emit('pointerdown', point);
+fast.t.loop(40);
+assert.equal(fast.t.getGrid()[3][1].lv, 2);
+assert.equal(fast.t.getGrid()[3][5].lv, 1);
+
+const pulse = overdrive(['one_shot_pulse']);
+pulse.t.startStage();
+assert.equal(pulse.t.state.taps, 2);
+pulse.t.getGrid()[0][0] = pulse.t.makeDrop(1, 5);
+pulse.t.activateCell(0, 0);
+assert.equal(pulse.t.getGrid()[0][0], null);
+assert.equal(pulse.t.state.taps, 1);
+pulse.t.state.stage = 9;
+pulse.t.startStage();
+assert.equal(pulse.t.state.taps, 1);
+
+const mining = overdrive(['ion_mining']);
+for (let i = 0; i < 9; i++) {
+  mining.t.getGrid()[0][0] = mining.t.makeDrop(3, 4);
+  mining.t.burstCell(0,0);
+}
+mining.t.openShop();
+const mineRestored = launch({ saved: mining.saved });
+assert.equal(mineRestored.t.state.miningProgress, 9);
+mineRestored.t.getGrid()[0][0] = mineRestored.t.makeDrop(3, 4);
+mineRestored.t.burstCell(0,0);
+assert.equal(mineRestored.t.state.coins, 5);
+assert.equal(mineRestored.t.state.miningProgress, 0);
+
+const gambler = overdrive(['golden_excitation','quantum_gambler'], () => 0.15);
+gambler.t.state.coins = 20;
+gambler.t.tuning.probMult = 2;
+gambler.t.getGrid()[0][0] = gambler.t.makeDrop(3, 4);
+gambler.t.burstCell(0,0);
+assert.equal(gambler.t.state.score, 270);
+assert.equal(gambler.t.state.coins, 21);
+const echo = overdrive(['chain_echo'], () => 0);
+for (let i = 0; i < 12; i++) {
+  echo.t.getDroplets().length = 0;
+  echo.t.getGrid()[0][0] = echo.t.makeDrop(3, 4);
+  echo.t.burstCell(0, 0);
+  assert.equal(echo.t.getDroplets().length, i < 8 ? 8 : 4);
+}
+
+for (const reflector of ['wall', 'bumper']) {
+  const reflected = overdrive(['reflection_singularity']);
+  reflected.t.createEmptyBoard(6);
+  const target = reflector === 'wall' ? [1,1] : [2,1];
+  if (reflector === 'bumper') reflected.t.getBumpers()[1][1] = '\\';
+  reflected.t.getGrid()[target[0]][target[1]] = reflected.t.makeDrop(2, 4);
+  reflected.t.spawnDroplet(1,0,reflector === 'wall' ? -1 : 1,0,{ bouncesLeft: 1 });
+  for (let i = 0; i < 32 && reflected.t.state.score === 0; i++) reflected.t.stepChain(0.02, 0.02);
+  assert.equal(reflected.t.state.score, 18, reflector);
+}
+console.log('PASS: OVERDRIVE economy, saved shop, rarity and markup, relic effects, refill hazards and turbo');
+
+// Cooling must never refill an empty board or prevent a lone survivor from being cleared.
+const finalCooling = scenario('cooling', { reduced: true });
+finalCooling.t.createEmptyBoard(6);
+const loneGrid = finalCooling.t.getGrid();
+loneGrid[2][2] = finalCooling.t.makeDrop(1,4);
+finalCooling.t.state.taps = 3;
+finalCooling.t.activateCell(2,2);
+assert.equal(loneGrid[2][2].lv,2);
+finalCooling.t.activateCell(2,2);
+assert.equal(loneGrid[2][2].lv,2, 'a surviving critical cell cooled by exactly one');
+assert.equal(finalCooling.el('tacBoardMeta').classList.contains('anomaly-flash'),false);
+finalCooling.t.activateCell(2,2);
+for (let i = 1; i <= 80 && finalCooling.t.getRoute().phase === 'stage'; i++) finalCooling.t.loop(i * 16);
+assert.equal(finalCooling.t.getRoute().phase,'cards', 'the last pulse can clear the anomaly');
+assert.equal(finalCooling.t.state.stage,2);
+assert.equal(finalCooling.t.state.coins,10);
+assert.ok(loneGrid.flat().every(cell=>cell===null), 'all ionized cells stay empty');
+
+const mixed = scenario('cooling', { reduced: true });
+mixed.t.createEmptyBoard(6);
+const mixedGrid = mixed.t.getGrid();
+mixedGrid[1][1] = mixed.t.makeDrop(3,4);
+mixedGrid[2][2] = mixed.t.makeDrop(3,4);
+mixedGrid[4][4] = mixed.t.makeDrop(2,4);
+mixedGrid[5][5] = mixed.t.makeDrop(1,2);
+mixed.t.activateCell(1,1);
+for (let i = 1; i <= 80 && mixed.t.state.busy; i++) mixed.t.loop(i * 16);
+assert.equal(mixedGrid[1][1],null, 'the just-ionized cell is never resurrected');
+assert.equal(mixedGrid[2][2].lv,2, 'critical survivor cools by one');
+assert.equal(mixedGrid[4][4].lv,2, 'a survivor with two durability is unchanged');
+assert.equal(mixedGrid[5][5].lv,1, 'cooling cannot exceed the cell maximum');
+assert.match(mixed.el('anomalyFeedback').textContent,/冷却 1セル/);
+
+const inflation = overdrive(['overload_reactor']);
+const { overdriveAssistRate: assist, overdriveRefillInc: inc, overdriveHazards: hazards } = inflation.t;
+assert.equal(assist(1,5,2),65);
+assert.ok(assist(21,30,10) < assist(1,30,10));
+assert.ok(assist(1,30,10) < assist(1,30,3));
+assert.ok(assist(1,35,10) < 5);
+assert.equal(assist(1,38,3,100),0);
+assert.equal(assist(30,38,10,100),0);
+assert.deepEqual([inc(1,5,2),inc(1,6,5),inc(1,20,9),inc(1,35,12)],[1,2,3,5]);
+assert.equal(inc(24,5,2,2),4);
+for (const key of ['ice','armor','blank','short']) {
+  assert.ok(hazards(25,6)[key] > hazards(24,6)[key]);
+  assert.ok(hazards(38,6)[key] > hazards(30,6)[key]);
+  assert.ok(hazards(50,6)[key] > hazards(38,6)[key]);
+}
+const maxRefills = inflation.t.MAX_OVERDRIVE_REFILLS;
+for (let i = 0; i < maxRefills + 5; i++) inflation.t.triggerEscalationRefill();
+assert.equal(inflation.t.state.refillsThisTap,maxRefills);
+assert.ok(inflation.t.state.burstLv >= 100, 'Lv.100 remains reachable at the mechanical ceiling');
+assert.equal(inflation.t.state.reactorMult,1.25 ** 6);
+inflation.t.createEmptyBoard(8);
+inflation.t.getGrid()[0][0] = inflation.t.makeDrop(1,4);
+inflation.t.burstCell(0,0);
+assert.equal(inflation.t.state.pendingRefill,false,'a clear at the cap cannot enqueue another wave');
+console.log('PASS: cooling final-cell regression and OVERDRIVE scaling, hazard tiers and safety limits');
