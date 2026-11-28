@@ -88,13 +88,16 @@
     border: none;
     background: transparent;
     color: var(--mute);
-    font-size: 11px;
+    font-size: 10.5px;
     font-weight: 800;
-    letter-spacing: 0.05em;
-    padding: 5px 10px;
+    letter-spacing: 0.04em;
+    padding: 5px 8px;
     cursor: pointer;
     transition: background 0.15s, color 0.15s, box-shadow 0.15s;
     white-space: nowrap;
+  }
+  @media (min-width: 400px) {
+    .mode-btn { font-size: 11px; padding: 5px 10px; letter-spacing: 0.05em; }
   }
   .mode-btn.active-tac {
     background: var(--cyan);
@@ -109,19 +112,20 @@
   .top-actions {
     display: flex;
     align-items: center;
-    gap: 4px;
+    gap: 3px;
   }
   .coin-badge {
     display: inline-flex;
     align-items: center;
-    gap: 4px;
+    gap: 3px;
     background: var(--surface);
     border: 1px solid var(--hair-bright);
-    padding: 4px 8px;
+    padding: 4px 7px;
     font-size: 12px;
     font-weight: 900;
     color: var(--amber);
     transition: transform 0.15s, border-color 0.15s;
+    white-space: nowrap;
   }
   .coin-badge.pulse {
     transform: scale(1.14);
@@ -132,15 +136,22 @@
     background: var(--surface);
     color: var(--ink2);
     border: 1px solid var(--hair-bright);
-    width: 30px;
+    width: 28px;
     height: 28px;
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    font-size: 13px;
+    font-size: 12.5px;
+    font-weight: 800;
     cursor: pointer;
-    transition: border-color 0.15s, color 0.15s;
+    transition: border-color 0.15s, color 0.15s, background 0.15s;
+    padding: 0;
   }
+  @media (min-width: 400px) {
+    .top-actions { gap: 4px; }
+    .icon-btn { width: 30px; font-size: 13px; }
+  }
+  .icon-btn:hover { border-color: var(--mode-accent); color: var(--ink); }
   .icon-btn:active { transform: scale(0.94); }
 
   /* ===== Dual-Chassis HUD ===== */
@@ -166,48 +177,68 @@
     display: flex;
     align-items: center;
     justify-content: space-between;
-    gap: 8px;
+    gap: 6px;
+    min-width: 0;
   }
   .stage-cluster {
     display: flex;
     align-items: baseline;
-    gap: 6px;
+    gap: 5px;
+    min-width: 0;
+    flex-shrink: 1;
   }
   .stage-code {
     font-size: 14px;
     font-weight: 900;
     letter-spacing: 0.05em;
     color: var(--ink);
+    white-space: nowrap;
   }
   .stage-meta {
     font-size: 10px;
     font-weight: 700;
     color: var(--mute);
+    white-space: nowrap;
+  }
+  .best-chip {
+    font-size: 9.5px;
+    font-weight: 800;
+    color: var(--ink2);
+    opacity: 0.82;
+    letter-spacing: 0.02em;
+    white-space: nowrap;
   }
   .hud-right-meta {
     display: flex;
     align-items: center;
-    gap: 6px;
+    gap: 5px;
+    min-width: 0;
+    flex-shrink: 1;
   }
   .score-readout {
     font-size: 12px;
     font-weight: 800;
     color: var(--ink2);
+    white-space: nowrap;
   }
   .score-readout strong { color: var(--ink); font-size: 13px; }
   .tag-chip {
-    font-size: 10px;
+    font-size: 9.5px;
     font-weight: 800;
-    padding: 1px 6px;
+    padding: 1px 5px;
     border: 1px solid rgba(0, 229, 255, 0.5);
     color: var(--cyan);
     background: rgba(0, 229, 255, 0.12);
     white-space: nowrap;
+    max-width: 158px;
+    overflow: hidden;
+    text-overflow: ellipsis;
   }
   .tag-chip.boss {
     border-color: var(--pink);
     color: #ff8ab5;
     background: rgba(255, 46, 126, 0.18);
+    max-width: 170px;
   }
 
   /* TACTICAL HUD */
@@ -782,8 +813,71 @@
   }
   .card-icon svg { width: 16px; height: 16px; }
   .card-info { flex: 1; min-width: 0; }
+  .card-title-row { display: flex; align-items: center; gap: 5px; flex-wrap: wrap; }
   .card-name { font-size: 12px; font-weight: 900; color: var(--ink); }
   .card-desc { font-size: 11px; color: var(--ink2); margin-top: 2px; line-height: 1.35; }
+  .role-tag {
+    display: inline-flex;
+    align-items: center;
+    font-size: 9px;
+    font-weight: 900;
+    line-height: 1.2;
+    padding: 1px 5px;
+    border: 1px solid currentColor;
+    letter-spacing: 0.03em;
+    white-space: nowrap;
+  }
+  .role-pierce { color: var(--cyan); background: rgba(0, 229, 255, 0.12); }
+  .role-reflect { color: var(--amber); background: rgba(255, 176, 32, 0.14); }
+  .role-chain { color: #ff7ab8; background: rgba(255, 46, 126, 0.15); }
+  .role-mult { color: #fde047; background: rgba(253, 224, 71, 0.13); }
+  .role-ctrl { color: var(--emerald); background: rgba(0, 229, 139, 0.12); }
+  .role-mut { color: var(--purple); background: rgba(167, 139, 250, 0.15); }
+  .role-tool { color: var(--amber); background: rgba(255, 176, 32, 0.12); }
+  .role-taps { color: var(--emerald); background: rgba(0, 229, 139, 0.12); }
+
+  .deck-right-meta {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+  }
+  .mut-inline {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    font-size: 9.5px;
+    font-weight: 800;
+    padding: 0 5px;
+    border: 1px solid #4a2440;
+    background: rgba(25, 12, 26, 0.85);
+    color: var(--mute);
+  }
+  .mut-inline .m-on { font-weight: 900; }
+  .mut-bar {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 5px;
+    background: #100c18;
+    border: 1px solid #44254a;
+    padding: 5px 6px;
+    font-size: 9.5px;
+    font-weight: 800;
+  }
+  .mut-bar-cell {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 1px;
+    padding: 3px 4px;
+    background: rgba(255, 255, 255, 0.03);
+    border: 1px solid rgba(255, 255, 255, 0.07);
+    color: var(--ink2);
+    white-space: nowrap;
+    overflow: hidden;
+  }
+  .mut-bar-cell strong { font-size: 10px; }
+
   .btn-primary {
     background: var(--cyan);
     color: #05080f;
@@ -822,6 +916,50 @@
   }
   .btn-ghost:disabled { opacity: 0.35; cursor: default; }
 
+  .pref-box {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    background: var(--surface2);
+    border: 1px solid var(--hair);
+    padding: 9px 10px;
+  }
+  details.tune-details {
+    border: 1px solid var(--hair-bright);
+    background: #0b0f18;
+  }
+  details.tune-details > summary {
+    list-style: none;
+    cursor: pointer;
+    padding: 8px 10px;
+    font-size: 11.5px;
+    font-weight: 900;
+    color: var(--cyan);
+    background: var(--surface2);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 6px;
+  }
+  details.tune-details > summary::-webkit-details-marker { display: none; }
+  details.tune-details > summary::after {
+    content: "▸ 開く";
+    font-size: 10px;
+    color: var(--mute);
+  }
+  details.tune-details[open] > summary {
+    border-bottom: 1px solid var(--hair);
+  }
+  details.tune-details[open] > summary::after {
+    content: "▾ 閉じる";
+    color: var(--cyan);
+  }
+  .tune-details-body {
+    padding: 8px;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+  }
   .tune-row {
     display: flex;
     flex-direction: column;
@@ -834,7 +972,7 @@
   .tune-head span:last-child { color: var(--cyan); }
   input[type="range"] { width: 100%; accent-color: var(--cyan); margin: 2px 0 0; }
   .dev-bench {
-    border-top: 1px dashed var(--hair-bright);
+    border-top: 1px dashed var(--amber);
     padding-top: 8px;
     display: flex;
     flex-direction: column;
@@ -850,12 +988,126 @@
     font-size: 10px;
     font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
   }
+
+  /* Mini Help Modal (1-screen compact visual guide) */
+  .help-modal {
+    padding: 10px 12px;
+    gap: 7px;
+  }
+  .help-block {
+    background: var(--surface2);
+    border: 1px solid var(--hair);
+    border-left: 2.5px solid var(--cyan);
+    padding: 6px 8px;
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+  }
+  .help-block.ovd-accent { border-left-color: var(--pink); }
+  .help-block.amber-accent { border-left-color: var(--amber); }
+  .help-h {
+    font-size: 11px;
+    font-weight: 900;
+    color: var(--ink);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 6px;
+  }
+  .help-p {
+    font-size: 10.5px;
+    color: var(--ink2);
+    line-height: 1.38;
+  }
+  .help-scale {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 4px;
+    background: #090d16;
+    border: 1px solid var(--hair);
+    padding: 4px 6px;
+    margin-top: 2px;
+    font-size: 9.5px;
+    font-weight: 800;
+    color: var(--ink2);
+  }
+  .help-step {
+    display: inline-flex;
+    align-items: center;
+    gap: 3px;
+    white-space: nowrap;
+  }
+  .help-modes {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 5px;
+    margin-top: 2px;
+  }
+  .help-mode-card {
+    background: #090d16;
+    border: 1px solid var(--hair);
+    padding: 5px 6px;
+    font-size: 10px;
+    line-height: 1.35;
+    color: var(--ink2);
+  }
+  .help-mode-card strong { display: block; font-size: 10.5px; margin-bottom: 2px; }
+
+  /* Result Stats & Badges */
+  .res-stats {
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+    background: var(--surface2);
+    border: 1px solid var(--hair);
+    padding: 8px 10px;
+    text-align: left;
+  }
+  .res-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+    font-size: 12px;
+    color: var(--ink2);
+    padding: 2px 0;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+  }
+  .res-row:last-child { border-bottom: none; }
+  .res-val-wrap {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-weight: 900;
+    color: var(--ink);
+  }
+  .new-best-badge {
+    background: linear-gradient(135deg, var(--amber), #ffe066);
+    color: #090b10;
+    font-size: 9px;
+    font-weight: 900;
+    padding: 1px 5px;
+    letter-spacing: 0.04em;
+  }
+  .res-best-foot {
+    font-size: 10.5px;
+    color: var(--mute);
+    text-align: center;
+  }
+  .res-actions {
+    display: flex;
+    gap: 7px;
+    justify-content: center;
+  }
+  .res-actions > button { flex: 1; }
+
   /* Accessibility: default layout unchanged; short viewports may scroll. */
   [hidden] { display: none !important; }
   :focus-visible { outline: 2px solid #fff; outline-offset: 2px; }
   .sr-only { position:absolute; width:1px; height:1px; padding:0; margin:-1px; overflow:hidden; clip-path:inset(50%); white-space:nowrap; border:0; }
   .half-sheet:not(.open) { visibility:hidden; }
-  .pref-row { display:flex; align-items:center; gap:8px; font-size:12px; }
+  .pref-row { display:flex; align-items:center; gap:8px; font-size:12px; cursor:pointer; }
   @media (max-height: 560px), (max-width: 350px) {
     html, body { overflow:auto; }
     #app { height:auto; min-height:100dvh; }
@@ -881,9 +1133,10 @@
     </div>
     <div class="top-actions">
       <div class="coin-badge" id="coinBadge" title="所持コイン">🪙 <span id="valCoins">4</span></div>
-      <button class="icon-btn" id="btnTune" onclick="openTuning()" title="ライブチューニング" aria-label="ライブチューニング">⚙</button>
-      <button class="icon-btn" id="btnMute" onclick="toggleMute()" title="音声ミュート">🔊</button>
-      <button class="icon-btn" onclick="restartRun()" title="最初からやり直す">↻</button>
+      <button class="icon-btn" id="btnHelp" onclick="openHelp()" title="遊び方ミニガイド" aria-label="遊び方ミニガイド">?</button>
+      <button class="icon-btn" id="btnTune" onclick="openTuning()" title="設定・チューニング" aria-label="設定・チューニング">⚙</button>
+      <button class="icon-btn" id="btnMute" onclick="toggleMute()" title="音声ミュート" aria-label="音声ミュート">🔊</button>
+      <button class="icon-btn" id="btnRestart" onclick="restartRun()" title="最初からやり直す" aria-label="最初からやり直す">↻</button>
     </div>
   </div>
 
@@ -893,6 +1146,7 @@
       <div class="stage-cluster">
         <span class="stage-code" id="valStage">STAGE 01</span>
         <span class="stage-meta" id="subStage">6×6 · Lv.4</span>
+        <span class="best-chip" id="hudBest" hidden></span>
       </div>
       <div class="hud-right-meta">
         <span class="score-readout" id="tacScoreReadout">残 <strong id="valRemCells">0</strong></span>
@@ -960,7 +1214,10 @@
     <div class="relic-deck unlocked" id="relicDeck" role="button" tabindex="0" aria-controls="loadoutSheet" aria-expanded="false" onclick="toggleLoadoutSheet()">
       <div class="relic-deck-head">
         <span class="lock-state"><span class="lock-pin"></span><span id="lockLabel">UNLOCKED · タップで装備入替</span></span>
-        <span class="bench-hint" id="slotSummary">装備 0/4 · 控え 0</span>
+        <span class="deck-right-meta">
+          <span class="mut-inline" id="deckMutInline" title="OVERDRIVE 変異レベル（クロス / 黄金 / プリズム）" hidden></span>
+          <span class="bench-hint" id="slotSummary">装備 0/4 · 控え 0</span>
+        </span>
       </div>
       <div class="relic-slots" id="relicSlots"></div>
     </div>
@@ -977,6 +1234,7 @@
     <button class="btn-ghost" onclick="closeLoadoutSheet()">閉じる</button>
   </div>
   <div class="sheet-body">
+    <div class="mut-bar" id="loadoutMutBar" hidden></div>
     <div class="sec-lbl">装備中（クリックで控えへ）</div>
     <div class="card-grid" id="equippedList"></div>
     <div class="sec-lbl">控えライブラリ（クリックで装備）</div>
@@ -992,6 +1250,7 @@
       <div class="coin-badge">🪙 <span id="shopCoins">0</span></div>
     </div>
     <div id="shopSummary" style="font-size:12px;color:var(--emerald);font-weight:700;line-height:1.45;"></div>
+    <div class="mut-bar" id="shopMutBar" hidden></div>
     <div class="card-grid" id="shopItems"></div>
     <div style="display:flex;gap:8px;justify-content:space-between;margin-top:4px;">
       <button class="btn-ghost" id="btnReroll" onclick="rerollShop()">🎲 リロール (2🪙)</button>
@@ -1000,76 +1259,132 @@
   </div>
 </div>
 
-<!-- Live Tuning Hatch Modal (Original 72KB Params + Peek Mode) -->
+<!-- Settings & Live Tuning Modal -->
 <div class="overlay" id="tuneOverlay" role="dialog" aria-labelledby="tuneTitle">
   <div class="modal">
     <div class="modal-head">
-      <div class="modal-title" id="tuneTitle">⚙ LIVE TUNING HATCH</div>
+      <div class="modal-title" id="tuneTitle">⚙ 設定・チューニング</div>
       <div style="display:flex;gap:5px;">
         <button class="btn-ghost" id="btnPeek" onclick="toggleTunePeek()">👁 透過Peek</button>
         <button class="btn-ghost" onclick="closeModal('tuneOverlay')">閉じる</button>
       </div>
     </div>
-    <div class="tune-row">
-      <div class="tune-head"><span>TACTICAL 装備枠数</span><span id="tvTacSlots">4</span></div>
-      <input type="range" id="trTacSlots" min="2" max="12" step="1" oninput="applyTune()">
-    </div>
-    <div class="tune-row">
-      <div class="tune-head"><span>OVERDRIVE 装備枠数</span><span id="tvOdSlots">6</span></div>
-      <input type="range" id="trOdSlots" min="2" max="12" step="1" oninput="applyTune()">
-    </div>
-    <div class="tune-row">
-      <div class="tune-head"><span>OVERDRIVE 難易度カーブ</span><span id="tvCurve">4.5x</span></div>
-      <input type="range" id="trCurve" min="2.0" max="8.0" step="0.5" oninput="applyTune()">
-    </div>
-    <div class="tune-row">
-      <div class="tune-head"><span>確率レリック発動補正</span><span id="tvProb">1.0x</span></div>
-      <input type="range" id="trProb" min="0.5" max="2.0" step="0.1" oninput="applyTune()">
-    </div>
-    <div class="tune-row">
-      <div class="tune-head"><span>電子ビーム移動速度</span><span id="tvSpeed">1.0x</span></div>
-      <input type="range" id="trSpeed" min="0.5" max="2.5" step="0.1" oninput="applyTune()">
-    </div>
-    <div class="tune-row">
-      <div class="tune-head"><span>リフィル進路アシスト率</span><span id="tvAssist">65%</span></div>
-      <input type="range" id="trAssist" min="0" max="100" step="5" oninput="applyTune()">
-    </div>
-    <div class="tune-row">
-      <div class="tune-head"><span>初期電離Lv / リフィル上昇</span><span id="tvLv">Lv.4 / +1</span></div>
-      <div style="display:flex;gap:8px;">
-        <input type="range" id="trInitLv" min="3" max="5" step="1" oninput="applyTune()">
-        <input type="range" id="trLvInc" min="0" max="2" step="1" oninput="applyTune()">
-      </div>
-    </div>
-    <div class="dev-bench">
-      <div class="sec-lbl">設定・アクセシビリティ</div>
+    <div class="pref-box">
+      <div class="sec-lbl">一般設定・アクセシビリティ</div>
       <label class="pref-row"><input id="prefNumbers" type="checkbox">残耐久の数字を表示</label>
       <label class="pref-row"><input id="prefMotion" type="checkbox">演出を軽減（端末設定を優先）</label>
-      <button class="btn-ghost" onclick="resetPreferences()">設定を初期化</button>
-      <div id="debugBench" hidden>
-        <div class="sec-lbl">DEV BENCH（デバッグ専用）</div>
-        <div style="display:flex;gap:6px;flex-wrap:wrap;">
+      <div><button class="btn-ghost" onclick="resetPreferences()">設定を初期化</button></div>
+    </div>
+    <details class="tune-details" id="tuneDetails">
+      <summary>詳細バランス調整（スライダー・JSON）</summary>
+      <div class="tune-details-body">
+        <div class="tune-row">
+          <div class="tune-head"><span>TACTICAL 装備枠数</span><span id="tvTacSlots">4</span></div>
+          <input type="range" id="trTacSlots" min="2" max="12" step="1" oninput="applyTune()">
+        </div>
+        <div class="tune-row">
+          <div class="tune-head"><span>OVERDRIVE 装備枠数</span><span id="tvOdSlots">6</span></div>
+          <input type="range" id="trOdSlots" min="2" max="12" step="1" oninput="applyTune()">
+        </div>
+        <div class="tune-row">
+          <div class="tune-head"><span>OVERDRIVE 難易度カーブ</span><span id="tvCurve">4.5x</span></div>
+          <input type="range" id="trCurve" min="2.0" max="8.0" step="0.5" oninput="applyTune()">
+        </div>
+        <div class="tune-row">
+          <div class="tune-head"><span>確率レリック発動補正</span><span id="tvProb">1.0x</span></div>
+          <input type="range" id="trProb" min="0.5" max="2.0" step="0.1" oninput="applyTune()">
+        </div>
+        <div class="tune-row">
+          <div class="tune-head"><span>電子ビーム移動速度</span><span id="tvSpeed">1.0x</span></div>
+          <input type="range" id="trSpeed" min="0.5" max="2.5" step="0.1" oninput="applyTune()">
+        </div>
+        <div class="tune-row">
+          <div class="tune-head"><span>リフィル進路アシスト率</span><span id="tvAssist">65%</span></div>
+          <input type="range" id="trAssist" min="0" max="100" step="5" oninput="applyTune()">
+        </div>
+        <div class="tune-row">
+          <div class="tune-head"><span>初期電離Lv / リフィル上昇</span><span id="tvLv">Lv.4 / +1</span></div>
+          <div style="display:flex;gap:8px;">
+            <input type="range" id="trInitLv" min="3" max="5" step="1" oninput="applyTune()">
+            <input type="range" id="trLvInc" min="0" max="2" step="1" oninput="applyTune()">
+          </div>
+        </div>
+        <textarea id="jsonBox" aria-label="チューニング設定JSON" placeholder="設定JSON"></textarea>
+        <div style="display:flex;gap:6px;">
+          <button class="btn-ghost" onclick="exportTuneJson()">📋 JSON更新</button>
+          <button class="btn-primary" onclick="importTuneJson()">📥 JSON適用</button>
+        </div>
+      </div>
+    </details>
+    <div id="debugBench" hidden class="dev-bench">
+      <div class="sec-lbl" style="color:var(--amber);border-left-color:var(--amber);">DEV BENCH（デバッグ専用）</div>
+      <div style="display:flex;gap:6px;flex-wrap:wrap;">
         <button class="btn-amber" onclick="debugUnlockAll()">🔓 全レリック解放</button>
         <button class="btn-amber" onclick="debugAddCoins()">🪙 +50</button>
         <button class="btn-ghost" onclick="debugSkipStage()">⏭ 次面へ</button>
         <button class="btn-ghost" onclick="regenCurrentStage()">🎲 再生成</button>
-        </div>
-      </div>
-      <textarea id="jsonBox" aria-label="チューニング設定JSON" placeholder="設定JSON"></textarea>
-      <div style="display:flex;gap:6px;">
-        <button class="btn-ghost" onclick="exportTuneJson()">📋 JSON更新</button>
-        <button class="btn-primary" onclick="importTuneJson()">📥 JSON適用</button>
       </div>
     </div>
   </div>
 </div>
 
+<!-- 1-Screen Mini Help Modal -->
+<div class="overlay" id="helpOverlay" role="dialog" aria-labelledby="helpTitle">
+  <div class="modal help-modal">
+    <div class="modal-head" style="padding-bottom:6px;">
+      <div class="modal-title" id="helpTitle">? QUICK GUIDE · 遊び方</div>
+      <button class="btn-ghost" id="btnHelpClose" onclick="closeModal('helpOverlay')">閉じる</button>
+    </div>
+    <div class="help-block">
+      <div class="help-h"><span>1. 電子雲の色と励起段階</span><span style="color:var(--pink);font-size:10px;">臨界＋1発＝電離！</span></div>
+      <div class="help-p">タップや被弾で準位が上がり、<strong>臨界（ピンク白熱＋破線リング）</strong>に当てると電離して周囲4方向へ電子ビームを放出します。</div>
+      <div class="help-scale" aria-label="励起段階：残4シアン、残3緑、残2オレンジ、残1臨界ピンク">
+        <span class="help-step"><span class="leg-cloud" style="width:10px;height:10px;color:#00d8ff;"></span>残4</span>
+        <span>→</span>
+        <span class="help-step"><span class="leg-cloud" style="width:12px;height:12px;color:#00e58b;"></span>残3(2s環)</span>
+        <span>→</span>
+        <span class="help-step"><span class="leg-cloud" style="width:14px;height:14px;color:#ff7a2b;"></span>残2(張出)</span>
+        <span>→</span>
+        <span class="help-step" style="color:#ff85b3;"><span class="leg-cloud" style="width:16px;height:16px;color:#ff2e7e;"></span>残1(臨界)</span>
+      </div>
+    </div>
+    <div class="help-block">
+      <div class="help-h"><span>2. 軌道の向きと盤面ギミック</span><span style="color:var(--cyan);font-size:10px;">斜め4葉＝×方向</span></div>
+      <div class="help-p">
+        <strong>通常球</strong>＝<kbd>＋</kbd>十字4方向 ／ <strong>斜め4葉雲</strong>＝<kbd>×</kbd>斜め4方向へ射出。<br>
+        <strong>氷殻</strong>＝1発で解凍 ／ <strong>装甲板</strong>＝板側の被弾を遮断 ／ <strong>偏向板</strong>（<code>/</code> <code>\</code>）＝90°屈折。
+      </div>
+    </div>
+    <div class="help-block amber-accent">
+      <div class="help-h"><span>3. 0タップ前の装備入替（ハーフシート）</span><span style="color:var(--amber);font-size:10px;">UNLOCKED</span></div>
+      <div class="help-p">各ステージの<strong>最初の1タップ前</strong>なら、下部バーから盤面を見たまま装備と控えレリックを自由に入替可能。初弾タップで <strong>LOCKED</strong> 締結されます。</div>
+    </div>
+    <div class="help-block ovd-accent">
+      <div class="help-h"><span>4. 2つのゲームモード</span></div>
+      <div class="help-modes">
+        <div class="help-mode-card">
+          <strong style="color:var(--cyan);">TACTICAL</strong>
+          6×6固定・確率要素なし。残弾を次面へ引継ぎ（3連鎖で+1弾）、全原子を電離すればクリア。
+        </div>
+        <div class="help-mode-card">
+          <strong style="color:var(--pink);">OVERDRIVE</strong>
+          全消しで即リフィル＆最大8×8拡大・Wave倍率青天井。規定パルス内に目標スコアを突破。
+        </div>
+      </div>
+    </div>
+    <button class="btn-primary" style="width:100%;padding:7px;" onclick="closeModal('helpOverlay')">了解してプレイに戻る</button>
+  </div>
+</div>
+
 <!-- Result Modal -->
-<div class="overlay" id="resultOverlay">
+<div class="overlay" id="resultOverlay" role="dialog" aria-labelledby="resTitle">
   <div class="modal" style="text-align:center;">
     <div class="modal-title" id="resTitle" style="color:var(--pink);">💥 RUN ENDED</div>
-    <div id="resBody" style="font-size:13px;color:var(--ink2);line-height:1.7;"></div>
-    <button class="btn-primary" onclick="restartRun()">もう一度挑戦する</button>
+    <div id="resBody" style="font-size:13px;color:var(--ink2);line-height:1.6;"></div>
+    <div class="res-actions">
+      <button class="btn-ghost" id="btnCopyShare" onclick="copyRunShare()">📋 戦績をコピー</button>
+      <button class="btn-primary" onclick="restartRun()">もう一度挑戦する</button>
+    </div>
   </div>
 </div>
 
@@ -1088,51 +1403,275 @@
     toastTimer = setTimeout(() => el.classList.remove('show'), 1800);
   }
 
-  /* ===== Original 72KB Audio System (Pentatonic Pop + Clear/Fail Chime) ===== */
+  /* ===== Web Audio Synth Engine (Compressor + Polyphony Throttle + 7 Event Voices) ===== */
   const AudioSys = {
     ctx: null,
+    master: null,
+    comp: null,
+    noiseBuf: null,
     muted: false,
+    maxVoices: 14,
+    voiceEnds: [],
+    lastAt: {},
     scale: [261.63, 293.66, 329.63, 392.00, 440.00, 523.25, 587.33, 659.25, 783.99, 880.00, 1046.50],
     init() {
       if (!this.ctx && (window.AudioContext || window.webkitAudioContext)) {
-        try { this.ctx = new (window.AudioContext || window.webkitAudioContext)(); } catch (_) {}
+        try {
+          this.ctx = new (window.AudioContext || window.webkitAudioContext)();
+          this.master = this.ctx.createGain();
+          this.master.gain.value = 0.84;
+          if (typeof this.ctx.createDynamicsCompressor === 'function') {
+            this.comp = this.ctx.createDynamicsCompressor();
+            this.comp.threshold.value = -14;
+            this.comp.knee.value = 12;
+            this.comp.ratio.value = 6;
+            this.comp.attack.value = 0.003;
+            this.comp.release.value = 0.12;
+            this.master.connect(this.comp);
+            this.comp.connect(this.ctx.destination);
+          } else {
+            this.master.connect(this.ctx.destination);
+          }
+          if (typeof this.ctx.createBuffer === 'function') {
+            const sr = this.ctx.sampleRate || 44100;
+            const len = Math.floor(sr * 0.14);
+            const buf = this.ctx.createBuffer(1, len, sr);
+            const ch = buf.getChannelData(0);
+            for (let i = 0; i < len; i++) ch[i] = (Math.random() * 2 - 1) * (1 - i / len);
+            this.noiseBuf = buf;
+          }
+        } catch (_) {}
       }
       if (this.ctx && this.ctx.state === 'suspended') this.ctx.resume().catch(() => {});
     },
-    pop(chain = 1, heavy = false) {
-      if (heavy || chain >= 3) pulseChassis();
-      if (this.muted) return;
+    acquire(tag, minGap = 0.024, voices = 1) {
+      if (this.muted) return null;
       this.init();
-      if (!this.ctx) return;
-      const now = this.ctx.currentTime;
-      const osc = this.ctx.createOscillator();
-      const gain = this.ctx.createGain();
-      const freq = this.scale[Math.min(this.scale.length - 1, Math.max(0, (chain - 1) % this.scale.length))]
-        * (chain > this.scale.length ? 1.5 : 1.0);
-      osc.type = heavy ? 'triangle' : 'sine';
+      if (!this.ctx) return null;
+      const now = this.ctx.currentTime || 0;
+      this.voiceEnds = this.voiceEnds.filter(t => t > now);
+      if (this.voiceEnds.length + voices > this.maxVoices) return null;
+      if (minGap > 0 && now - (this.lastAt[tag] ?? -9) < minGap) return null;
+      this.lastAt[tag] = now;
+      return { ctx: this.ctx, out: this.master || this.ctx.destination, now };
+    },
+    track(endAt) {
+      this.voiceEnds.push(endAt);
+    },
+    // 1. 励起ヒット（軽快なプラック音）
+    excite(rem = 2, directTap = false) {
+      const s = this.acquire('excite', 0.022, directTap ? 2 : 1);
+      if (!s) return;
+      const { ctx, out, now } = s;
+      const base = rem <= 1 ? 587.33 : rem === 2 ? 493.88 : rem === 3 ? 392.00 : 329.63;
+      const osc = ctx.createOscillator();
+      const g = ctx.createGain();
+      osc.type = 'triangle';
+      osc.frequency.setValueAtTime(base * 1.34, now);
+      osc.frequency.exponentialRampToValueAtTime(base, now + 0.026);
+      g.gain.setValueAtTime(directTap ? 0.13 : 0.095, now);
+      g.gain.exponentialRampToValueAtTime(0.001, now + 0.075);
+      osc.connect(g); g.connect(out);
+      osc.start(now); osc.stop(now + 0.08);
+      this.track(now + 0.08);
+      if (directTap || rem <= 1) {
+        const hi = ctx.createOscillator();
+        const hg = ctx.createGain();
+        hi.type = 'sine';
+        hi.frequency.setValueAtTime(base * 2, now);
+        hg.gain.setValueAtTime(0.045, now);
+        hg.gain.exponentialRampToValueAtTime(0.001, now + 0.045);
+        hi.connect(hg); hg.connect(out);
+        hi.start(now); hi.stop(now + 0.05);
+        this.track(now + 0.05);
+      }
+    },
+    // 2. 電離連鎖（ペンタトニック上昇＋高域倍音のきらめき）
+    pop(chain = 1, heavy = false, crit = false) {
+      if (heavy || chain >= 3 || crit) pulseChassis();
+      const s = this.acquire('pop', 0.024, 2);
+      if (!s) return;
+      const { ctx, out, now } = s;
+      const oct = chain > this.scale.length * 2 ? 2.0 : (chain > this.scale.length ? 1.5 : 1.0);
+      const freq = Math.min(2400, this.scale[Math.min(this.scale.length - 1, Math.max(0, (chain - 1) % this.scale.length))] * oct);
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+      osc.type = (heavy || crit) ? 'triangle' : 'sine';
       osc.frequency.setValueAtTime(freq, now);
-      osc.frequency.exponentialRampToValueAtTime(freq * (heavy ? 0.5 : 1.35), now + 0.11);
-      gain.gain.setValueAtTime(heavy ? 0.16 : 0.11, now);
-      gain.gain.exponentialRampToValueAtTime(0.001, now + 0.13);
-      osc.connect(gain); gain.connect(this.ctx.destination);
+      osc.frequency.exponentialRampToValueAtTime(freq * (heavy ? 0.62 : 1.28), now + 0.11);
+      gain.gain.setValueAtTime(crit ? 0.17 : (heavy ? 0.15 : 0.115), now);
+      gain.gain.exponentialRampToValueAtTime(0.001, now + 0.135);
+      osc.connect(gain); gain.connect(out);
       osc.start(now); osc.stop(now + 0.14);
+      this.track(now + 0.14);
+
+      const shimmer = ctx.createOscillator();
+      const sg = ctx.createGain();
+      const sFreq = Math.min(4200, freq * (crit ? 2.5 : 2.0));
+      shimmer.type = 'sine';
+      shimmer.frequency.setValueAtTime(sFreq, now + 0.01);
+      shimmer.frequency.exponentialRampToValueAtTime(sFreq * 1.12, now + 0.15);
+      sg.gain.setValueAtTime(0.0001, now);
+      sg.gain.linearRampToValueAtTime(crit ? 0.08 : (chain >= 3 ? 0.058 : 0.036), now + 0.016);
+      sg.gain.exponentialRampToValueAtTime(0.0008, now + 0.16);
+      shimmer.connect(sg); sg.connect(out);
+      shimmer.start(now); shimmer.stop(now + 0.165);
+      this.track(now + 0.165);
+    },
+    // 3. 壁反射・偏向板（金属ショートクリック）
+    reflect(isBumper = false) {
+      const s = this.acquire('reflect', 0.028, 2);
+      if (!s) return;
+      const { ctx, out, now } = s;
+      const f1 = isBumper ? 1760 : 1420;
+      const f2 = isBumper ? 2840 : 2290;
+      [[f1, 'triangle', 0.075], [f2, 'square', 0.026]].forEach(([f, type, vol]) => {
+        const o = ctx.createOscillator();
+        const g = ctx.createGain();
+        o.type = type;
+        o.frequency.setValueAtTime(f, now);
+        o.frequency.exponentialRampToValueAtTime(f * 0.72, now + 0.038);
+        g.gain.setValueAtTime(vol, now);
+        g.gain.exponentialRampToValueAtTime(0.001, now + 0.042);
+        o.connect(g); g.connect(out);
+        o.start(now); o.stop(now + 0.045);
+        this.track(now + 0.045);
+      });
+    },
+    // 4. 凍結解除（高域フィルタノイズの氷砕け音）
+    shatter() {
+      const s = this.acquire('shatter', 0.04, 2);
+      if (!s) return;
+      const { ctx, out, now } = s;
+      if (this.noiseBuf && typeof ctx.createBufferSource === 'function' && typeof ctx.createBiquadFilter === 'function') {
+        const src = ctx.createBufferSource();
+        src.buffer = this.noiseBuf;
+        const flt = ctx.createBiquadFilter();
+        flt.type = 'highpass';
+        flt.frequency.setValueAtTime(3200, now);
+        flt.Q.value = 1.6;
+        const ng = ctx.createGain();
+        ng.gain.setValueAtTime(0.16, now);
+        ng.gain.exponentialRampToValueAtTime(0.001, now + 0.105);
+        src.connect(flt); flt.connect(ng); ng.connect(out);
+        src.start(now); src.stop(now + 0.11);
+        this.track(now + 0.11);
+      }
+      const ping = ctx.createOscillator();
+      const pg = ctx.createGain();
+      ping.type = 'sine';
+      ping.frequency.setValueAtTime(2093, now);
+      ping.frequency.exponentialRampToValueAtTime(2793.8, now + 0.085);
+      pg.gain.setValueAtTime(0.075, now);
+      pg.gain.exponentialRampToValueAtTime(0.001, now + 0.09);
+      ping.connect(pg); pg.connect(out);
+      ping.start(now); ping.stop(now + 0.095);
+      this.track(now + 0.095);
+    },
+    // 5. 方向装甲ブロック（硬質な低音ダンピング）
+    armorBlock(broken = false) {
+      const s = this.acquire('armor', 0.035, 2);
+      if (!s) return;
+      const { ctx, out, now } = s;
+      const lo = ctx.createOscillator();
+      const lg = ctx.createGain();
+      lo.type = 'triangle';
+      lo.frequency.setValueAtTime(broken ? 230 : 162, now);
+      lo.frequency.exponentialRampToValueAtTime(broken ? 82 : 56, now + 0.078);
+      lg.gain.setValueAtTime(0.17, now);
+      lg.gain.exponentialRampToValueAtTime(0.001, now + 0.085);
+      lo.connect(lg); lg.connect(out);
+      lo.start(now); lo.stop(now + 0.09);
+      this.track(now + 0.09);
+
+      const cl = ctx.createOscillator();
+      const cg = ctx.createGain();
+      cl.type = 'square';
+      cl.frequency.setValueAtTime(broken ? 740 : 360, now);
+      cl.frequency.exponentialRampToValueAtTime(broken ? 310 : 175, now + 0.032);
+      cg.gain.setValueAtTime(0.038, now);
+      cg.gain.exponentialRampToValueAtTime(0.001, now + 0.035);
+      cl.connect(cg); cg.connect(out);
+      cl.start(now); cl.stop(now + 0.04);
+      this.track(now + 0.04);
+    },
+    // 6. Wave昇格・ステージクリア（上昇アルペジオ＋軽いサブベース）
+    fanfare(kind = 'clear', wave = 2) {
+      const s = this.acquire('fanfare', 0.06, 4);
+      if (!s) return;
+      const { ctx, out, now } = s;
+      const mul = kind === 'wave' ? Math.min(1.45, 1 + (wave - 2) * 0.08) : 1.0;
+      const notes = kind === 'wave'
+        ? [392.00 * mul, 493.88 * mul, 587.33 * mul, 783.99 * mul]
+        : [523.25, 659.25, 783.99, 1046.50];
+      const step = kind === 'wave' ? 0.042 : 0.052;
+      notes.forEach((f, idx) => {
+        const t0 = now + idx * step;
+        const osc = ctx.createOscillator();
+        const g = ctx.createGain();
+        osc.type = 'triangle';
+        osc.frequency.setValueAtTime(f, t0);
+        g.gain.setValueAtTime(0.105, t0);
+        g.gain.exponentialRampToValueAtTime(0.001, t0 + 0.22);
+        osc.connect(g); g.connect(out);
+        osc.start(t0); osc.stop(t0 + 0.23);
+        this.track(t0 + 0.23);
+      });
+      const sub = ctx.createOscillator();
+      const sg = ctx.createGain();
+      sub.type = 'sine';
+      sub.frequency.setValueAtTime(kind === 'wave' ? 98.0 : 130.81, now);
+      sub.frequency.exponentialRampToValueAtTime(kind === 'wave' ? 65.41 : 98.0, now + 0.24);
+      sg.gain.setValueAtTime(0.145, now);
+      sg.gain.exponentialRampToValueAtTime(0.001, now + 0.26);
+      sub.connect(sg); sg.connect(out);
+      sub.start(now); sub.stop(now + 0.27);
+      this.track(now + 0.27);
     },
     chime(good = true) {
-      if (this.muted) return;
-      this.init();
-      if (!this.ctx) return;
-      const notes = good ? [523.25, 659.25, 783.99] : [220, 185];
-      notes.forEach((f, idx) => {
-        const now = this.ctx.currentTime + idx * 0.06;
-        const osc = this.ctx.createOscillator();
-        const g = this.ctx.createGain();
+      if (good) { this.fanfare('clear'); return; }
+      const s = this.acquire('fail', 0.05, 3);
+      if (!s) return;
+      const { ctx, out, now } = s;
+      [246.94, 207.65, 164.81].forEach((f, idx) => {
+        const t0 = now + idx * 0.075;
+        const osc = ctx.createOscillator();
+        const g = ctx.createGain();
         osc.type = 'triangle';
-        osc.frequency.setValueAtTime(f, now);
-        g.gain.setValueAtTime(0.11, now);
-        g.gain.exponentialRampToValueAtTime(0.001, now + 0.22);
-        osc.connect(g); g.connect(this.ctx.destination);
-        osc.start(now); osc.stop(now + 0.23);
+        osc.frequency.setValueAtTime(f, t0);
+        g.gain.setValueAtTime(0.115, t0);
+        g.gain.exponentialRampToValueAtTime(0.001, t0 + 0.24);
+        osc.connect(g); g.connect(out);
+        osc.start(t0); osc.stop(t0 + 0.25);
+        this.track(t0 + 0.25);
       });
+    },
+    // 7. ロードアウトロック締結／ショップ購入（精密な機械クリック）
+    mechClick(kind = 'buy') {
+      const s = this.acquire('mech', 0.018, 2);
+      if (!s) return;
+      const { ctx, out, now } = s;
+      const click = (t0, fStart, fEnd, vol, dur) => {
+        const o = ctx.createOscillator();
+        const g = ctx.createGain();
+        o.type = 'triangle';
+        o.frequency.setValueAtTime(fStart, t0);
+        o.frequency.exponentialRampToValueAtTime(fEnd, t0 + dur);
+        g.gain.setValueAtTime(vol, t0);
+        g.gain.exponentialRampToValueAtTime(0.001, t0 + dur);
+        o.connect(g); g.connect(out);
+        o.start(t0); o.stop(t0 + dur + 0.005);
+        this.track(t0 + dur + 0.005);
+      };
+      if (kind === 'lock') {
+        click(now, 980, 510, 0.09, 0.022);
+        click(now + 0.028, 660, 290, 0.11, 0.032);
+      } else if (kind === 'buy') {
+        click(now, 920, 520, 0.09, 0.024);
+        click(now + 0.022, 1318.5, 1760, 0.10, 0.11);
+      } else {
+        click(now, 1180, 740, 0.075, 0.024);
+      }
     }
   };
 
@@ -1187,29 +1726,29 @@
     return RELIC_SVG[id] || '<svg viewBox="0 0 16 16" fill="currentColor"><rect x="4" y="4" width="8" height="8"/></svg>';
   }
 
-  /* ===== Original 72KB Catalogs (100% Preserved) ===== */
+  /* ===== Original 72KB Catalogs (100% Preserved + Role Micro-Tags) ===== */
   const TACTICAL_RELICS = [
-    { id: 'first_pierce', name: 'ファーストアロー', short: '貫通初弾', cost: 4, desc: '各タップで最初に電離した1個から出る電子ビームが盤面を貫通する。' },
-    { id: 'edge_reflect_2', name: 'エッジリフレクト', short: '壁反射2', cost: 4, desc: '各タップにつき、最初に画面端へ当たった電子2発が跳ね返る。' },
-    { id: 'phase_shift', name: 'フェーズシフト', short: '方向切替', cost: 5, desc: '各ステージ1回、対象マスの射出軌道を「十字↔斜め」に切替できる。' },
-    { id: 'push_one', name: 'プッシュ1', short: '1マス移動', cost: 4, desc: '各ステージ1回、タップ消費なしで原子を隣接空きマスへ移動できる。' },
-    { id: 'overcharge_det', name: 'オーバーチャージ', short: '8方向電離', cost: 5, desc: '臨界原子を直接タップすると、十字＋斜めの8方向へ発射する。' },
-    { id: 'thaw_wave', name: '解凍波', short: '自動解凍2', cost: 4, desc: '各ステージ開始時、凍結マスの氷を最大2個自動で融解する。' },
-    { id: 'chain_tax', name: '効率回収', short: '2連鎖+1弾', cost: 6, desc: '残弾回復の条件が「3連鎖ごと」から「2連鎖ごと」に短縮される。' },
-    { id: 'armor_breaker', name: '装甲ブレイク', short: '周囲装甲破', cost: 5, desc: '直接タップは方向装甲を破壊し、周囲4マスの装甲も剥がす。' }
+    { id: 'first_pierce', name: 'ファーストアロー', short: '貫通初弾', role: '貫通', roleCls: 'role-pierce', cost: 4, desc: '各タップで最初に電離した1個から出る電子ビームが盤面を貫通する。' },
+    { id: 'edge_reflect_2', name: 'エッジリフレクト', short: '壁反射2', role: '反射', roleCls: 'role-reflect', cost: 4, desc: '各タップにつき、最初に画面端へ当たった電子2発が跳ね返る。' },
+    { id: 'phase_shift', name: 'フェーズシフト', short: '方向切替', role: '制御', roleCls: 'role-ctrl', cost: 5, desc: '各ステージ1回、対象マスの射出軌道を「十字↔斜め」に切替できる。' },
+    { id: 'push_one', name: 'プッシュ1', short: '1マス移動', role: '制御', roleCls: 'role-ctrl', cost: 4, desc: '各ステージ1回、タップ消費なしで原子を隣接空きマスへ移動できる。' },
+    { id: 'overcharge_det', name: 'オーバーチャージ', short: '8方向電離', role: '連鎖', roleCls: 'role-chain', cost: 5, desc: '臨界原子を直接タップすると、十字＋斜めの8方向へ発射する。' },
+    { id: 'thaw_wave', name: '解凍波', short: '自動解凍2', role: '制御', roleCls: 'role-ctrl', cost: 4, desc: '各ステージ開始時、凍結マスの氷を最大2個自動で融解する。' },
+    { id: 'chain_tax', name: '効率回収', short: '2連鎖+1弾', role: '連鎖', roleCls: 'role-chain', cost: 6, desc: '残弾回復の条件が「3連鎖ごと」から「2連鎖ごと」に短縮される。' },
+    { id: 'armor_breaker', name: '装甲ブレイク', short: '周囲装甲破', role: '貫通', roleCls: 'role-pierce', cost: 5, desc: '直接タップは方向装甲を破壊し、周囲4マスの装甲も剥がす。' }
   ];
 
   const OVERDRIVE_RELICS = [
-    { id: 'wall_reflect', name: 'リフレクト壁', short: '外周反射', cost: 4, desc: '画面端に当たった電子ビームが1回だけ跳ね返る。' },
-    { id: 'bounce_charge', name: '跳弾チャージ', short: '反射+25', cost: 4, desc: '壁で反射した電子が命中した原子の基礎点+25。' },
-    { id: 'cross_burst', name: 'クロスバースト', short: '交差3×3', cost: 5, desc: '電子同士が交差すると周囲3×3の原子が励起+1（1Wave最大4回）。' },
-    { id: 'crit_refill', name: '臨界リフィル', short: '35%臨界湧', cost: 5, desc: '全消しリフィル時、35%の確率で最初から臨界状態で湧く。' },
-    { id: 'chain_ripple', name: '連鎖の余波', short: '5連鎖追撃', cost: 4, desc: '5連鎖ごとに盤面上で最も耐久が高い原子に1ヒット。' },
-    { id: 'chain_lucky', name: 'チェーンラッキー', short: '25%追加波', cost: 5, desc: '電離時、25%の確率で追加の4方向電子をもう1波放つ。' },
-    { id: 'split_bounce', name: 'スプリットバウンス', short: '40%反射分裂', cost: 6, desc: '壁反射時、40%の確率で電子が2発（斜め追加）に分裂する。' },
-    { id: 'crit_pop', name: 'クリティカルポップ', short: '20%×4.0', cost: 5, desc: '電離時、20%の確率でその電離スコアが×4.0になる。' },
-    { id: 'last_stand', name: '背水の陣', short: '残1で×2.5', cost: 5, desc: '残りタップが1以下のとき、すべての獲得スコアが×2.5。' },
-    { id: 'snowball', name: '雪だるま機関', short: '15連鎖+3', cost: 5, desc: '1タップで15連鎖以上するたび、ラン終了まで基礎点+3。' }
+    { id: 'wall_reflect', name: 'リフレクト壁', short: '外周反射', role: '反射', roleCls: 'role-reflect', cost: 4, desc: '画面端に当たった電子ビームが1回だけ跳ね返る。' },
+    { id: 'bounce_charge', name: '跳弾チャージ', short: '反射+25', role: '反射', roleCls: 'role-reflect', cost: 4, desc: '壁で反射した電子が命中した原子の基礎点+25。' },
+    { id: 'cross_burst', name: 'クロスバースト', short: '交差3×3', role: '連鎖', roleCls: 'role-chain', cost: 5, desc: '電子同士が交差すると周囲3×3の原子が励起+1（1Wave最大4回）。' },
+    { id: 'crit_refill', name: '臨界リフィル', short: '35%臨界湧', role: '連鎖', roleCls: 'role-chain', cost: 5, desc: '全消しリフィル時、35%の確率で最初から臨界状態で湧く。' },
+    { id: 'chain_ripple', name: '連鎖の余波', short: '5連鎖追撃', role: '連鎖', roleCls: 'role-chain', cost: 4, desc: '5連鎖ごとに盤面上で最も耐久が高い原子に1ヒット。' },
+    { id: 'chain_lucky', name: 'チェーンラッキー', short: '25%追加波', role: '連鎖', roleCls: 'role-chain', cost: 5, desc: '電離時、25%の確率で追加の4方向電子をもう1波放つ。' },
+    { id: 'split_bounce', name: 'スプリットバウンス', short: '40%反射分裂', role: '反射', roleCls: 'role-reflect', cost: 6, desc: '壁反射時、40%の確率で電子が2発（斜め追加）に分裂する。' },
+    { id: 'crit_pop', name: 'クリティカルポップ', short: '20%×4.0', role: '倍率', roleCls: 'role-mult', cost: 5, desc: '電離時、20%の確率でその電離スコアが×4.0になる。' },
+    { id: 'last_stand', name: '背水の陣', short: '残1で×2.5', role: '倍率', roleCls: 'role-mult', cost: 5, desc: '残りタップが1以下のとき、すべての獲得スコアが×2.5。' },
+    { id: 'snowball', name: '雪だるま機関', short: '15連鎖+3', role: '倍率', roleCls: 'role-mult', cost: 5, desc: '1タップで15連鎖以上するたび、ラン終了まで基礎点+3。' }
   ];
 
   const MUTATIONS = [
@@ -1229,6 +1768,14 @@
     { id: 'wind', name: '偏西風', desc: '左への電子が出ず、右へ2連射される' },
     { id: 'onetap', name: 'ワントライ', desc: '初期タップ2回・高密度臨界・Wave×2.0開始' }
   ];
+
+  function roleBadgeHtml(kind, item) {
+    if (kind === 'relic' && item.role) return `<span class="role-tag ${item.roleCls || 'role-ctrl'}">${item.role}</span>`;
+    if (kind === 'mutation') return '<span class="role-tag role-mut">変異</span>';
+    if (kind === 'tool') return '<span class="role-tag role-tool">ツール</span>';
+    if (kind === 'taps') return '<span class="role-tag role-taps">補給</span>';
+    return '';
+  }
 
   /* ===== Original 72KB Tuning Config ===== */
   const TUNING_SCHEMA = Object.freeze({
@@ -1265,6 +1812,12 @@
   const tuning = defaultTuning();
   const preferences = { numbers: false, reduceMotion: false };
   const storageKey = 'lectron.preferences.v1:' + location.pathname;
+  const recordsKey = 'lectron.records.v1:' + location.pathname;
+  const runSaveKey = 'lectron.run.v1:' + location.pathname;
+  const records = {
+    tactical: { stage: 0, score: 0, chain: 0 },
+    overdrive: { stage: 0, score: 0, chain: 0 }
+  };
   const debugEnabled = new URLSearchParams(location.search).get('debug') === '1';
   const motionQuery = window.matchMedia('(prefers-reduced-motion: reduce)');
   function reducedMotion() { return preferences.reduceMotion || motionQuery.matches; }
@@ -1282,6 +1835,24 @@
   function savePreferences() {
     try {
       localStorage.setItem(storageKey, JSON.stringify({ version: 1, tuning, muted: AudioSys.muted, preferences }));
+      return true;
+    } catch (_) { return false; }
+  }
+  function sanitizeRecordEntry(raw) {
+    const intOr0 = v => (typeof v === 'number' && Number.isFinite(v) && v >= 0) ? Math.floor(v) : 0;
+    return { stage: intOr0(raw?.stage), score: intOr0(raw?.score), chain: intOr0(raw?.chain) };
+  }
+  function loadRecords() {
+    try {
+      const saved = JSON.parse(localStorage.getItem(recordsKey) || 'null');
+      if (!saved || saved.version !== 1) return;
+      records.tactical = sanitizeRecordEntry(saved.tactical);
+      records.overdrive = sanitizeRecordEntry(saved.overdrive);
+    } catch (_) {}
+  }
+  function saveRecords() {
+    try {
+      localStorage.setItem(recordsKey, JSON.stringify({ version: 1, tactical: records.tactical, overdrive: records.overdrive }));
       return true;
     } catch (_) { return false; }
   }
@@ -1318,6 +1889,7 @@
     maxTaps: 15,
     coins: 4,
     score: 0,
+    runScore: 0,
     targetScore: 420,
     wave: 1,
     waveMult: 1.0,
@@ -1328,6 +1900,7 @@
     busy: false,
     chainCount: 0,
     maxChainStage: 0,
+    maxChainRun: 0,
     refillsThisTap: 0,
     snowballBonus: 0,
     crossBurstCount: 0,
@@ -1339,14 +1912,20 @@
     activeTool: null, // 'swap' | 'blast' | 'phase_shift' | 'push_one'
     swapFirst: null,
     rerollCost: 2,
+    shopBaseReward: 0,
+    shopTapBonus: 0,
     wave2Preview: null,
     wave2Done: false,
     shake: 0,
+    hitstop: 0,
+    hitstopCd: 0,
     refillTimer: 0,
     pendingRefill: false,
     stageCleared: false,
     runOver: false,
     peekMode: false,
+    lastShareText: '',
+    startBest: { stage: 0, score: 0, chain: 0 },
     inv: {
       tactical: { owned: [], equipped: [], tools: ['swap'], mutations: { cross: 0, golden: 0, prism: 0 } },
       overdrive: { owned: [], equipped: [], tools: ['blast'], mutations: { cross: 0, golden: 0, prism: 0 } }
@@ -1400,6 +1979,51 @@
   function hasRelic(id) { return curInv().equipped.includes(id); }
   function prob(base) { return Math.min(0.95, base * tuning.probMult); }
 
+  function triggerHitstop(ms = 28) {
+    if (reducedMotion() || state.hitstopCd > 0) return;
+    state.hitstop = Math.max(state.hitstop, Math.min(0.035, Math.max(0.020, ms / 1000)));
+    state.hitstopCd = 0.14;
+  }
+
+  function formatBestStage(m, st) {
+    if (!st || st <= 0) return '--';
+    return m === 'tactical'
+      ? `S${String(st).padStart(2, '0')}`
+      : `A${Math.floor((st - 1) / 3) + 1}-${((st - 1) % 3) + 1}`;
+  }
+
+  function commitBestRecords() {
+    const rec = records[mode];
+    let changed = false;
+    if (state.stage > rec.stage) { rec.stage = state.stage; changed = true; }
+    if (state.runScore > rec.score) { rec.score = state.runScore; changed = true; }
+    if (state.maxChainRun > rec.chain) { rec.chain = state.maxChainRun; changed = true; }
+    if (changed) saveRecords();
+  }
+
+  function renderMutationStatus() {
+    const isOvd = mode === 'overdrive';
+    const m = state.inv.overdrive.mutations;
+    const inlineEl = document.getElementById('deckMutInline');
+    inlineEl.hidden = !isOvd;
+    if (isOvd) {
+      inlineEl.innerHTML =
+        `<span class="${m.cross ? 'm-on' : ''}" style="${m.cross ? 'color:#ff7ab8' : ''}">✕${m.cross}</span>` +
+        `<span class="${m.golden ? 'm-on' : ''}" style="${m.golden ? 'color:#ffb020' : ''}">◆${m.golden}</span>` +
+        `<span class="${m.prism ? 'm-on' : ''}" style="${m.prism ? 'color:#c084fc' : ''}">△${m.prism}</span>`;
+    }
+    const barHtml = isOvd
+      ? `<div class="mut-bar-cell"><span>✕クロス</span><strong style="color:${m.cross ? '#ff7ab8' : 'var(--mute)'}">Lv.${m.cross} (+${m.cross * 12}%)</strong></div>` +
+        `<div class="mut-bar-cell"><span>◆黄金</span><strong style="color:${m.golden ? '#ffb020' : 'var(--mute)'}">Lv.${m.golden} (+${m.golden * 10}%)</strong></div>` +
+        `<div class="mut-bar-cell"><span>△プリズム</span><strong style="color:${m.prism ? '#c084fc' : 'var(--mute)'}">Lv.${m.prism} (+${m.prism * 8}%)</strong></div>`
+      : '';
+    for (const id of ['loadoutMutBar', 'shopMutBar']) {
+      const el = document.getElementById(id);
+      el.hidden = !isOvd;
+      if (isOvd) el.innerHTML = barHtml;
+    }
+  }
+
   function waveColor(w) {
     if (w <= 1) return '#ff2e7e';
     if (w === 2) return '#ff6b1a';
@@ -1438,6 +2062,231 @@
     }
   }
 
+  /* ===== Autosave (Stage Start & Shop Transition, Protected) ===== */
+  function clearRunSave() {
+    try {
+      if (typeof localStorage.removeItem === 'function') localStorage.removeItem(runSaveKey);
+      else localStorage.setItem(runSaveKey, '');
+    } catch (_) {}
+  }
+
+  function shouldAutosaveStage() {
+    if (state.runOver) return false;
+    const inv = curInv();
+    const mut = inv.mutations;
+    return state.stage > 1 || inv.owned.length > 0 || state.coins !== 4 || mut.cross > 0 || mut.golden > 0 || mut.prism > 0;
+  }
+
+  function serializeGrid() {
+    return grid.map(row => row.map(d => d ? {
+      lv: d.lv, burstLv: d.burstLv, type: d.type, frozen: !!d.frozen, armor: d.armor || null, bonusBase: d.bonusBase || 0
+    } : null));
+  }
+
+  function saveRunState(phase = 'stage') {
+    if (state.runOver) return false;
+    try {
+      const payload = {
+        version: 1,
+        mode,
+        phase,
+        stage: state.stage,
+        taps: state.taps,
+        maxTaps: state.maxTaps,
+        coins: state.coins,
+        score: state.score,
+        runScore: state.runScore,
+        maxChainRun: state.maxChainRun,
+        maxChainStage: state.maxChainStage,
+        targetScore: state.targetScore,
+        wave: state.wave,
+        waveMult: state.waveMult,
+        gridSize: state.gridSize,
+        burstLv: state.burstLv,
+        snowballBonus: state.snowballBonus,
+        rerollCost: state.rerollCost,
+        shopBaseReward: state.shopBaseReward,
+        shopTapBonus: state.shopTapBonus,
+        phaseShiftUsed: state.phaseShiftUsed,
+        pushUsed: state.pushUsed,
+        mirrorShieldActive: state.mirrorShieldActive,
+        wave2Done: state.wave2Done,
+        startBest: state.startBest,
+        inv: {
+          tactical: {
+            owned: state.inv.tactical.owned.slice(),
+            equipped: state.inv.tactical.equipped.slice(),
+            tools: state.inv.tactical.tools.slice(),
+            mutations: { ...state.inv.tactical.mutations }
+          },
+          overdrive: {
+            owned: state.inv.overdrive.owned.slice(),
+            equipped: state.inv.overdrive.equipped.slice(),
+            tools: state.inv.overdrive.tools.slice(),
+            mutations: { ...state.inv.overdrive.mutations }
+          }
+        },
+        grid: phase === 'stage' ? serializeGrid() : null,
+        bumpers: phase === 'stage' ? bumpers.map(row => row.slice()) : null,
+        wave2Preview: phase === 'stage' && Array.isArray(state.wave2Preview) ? state.wave2Preview : null,
+        offers: phase === 'shop' ? shopOffers.map(o => ({ kind: o.kind, id: o.item.id, bought: !!o.bought })) : null
+      };
+      localStorage.setItem(runSaveKey, JSON.stringify(payload));
+      return true;
+    } catch (_) { return false; }
+  }
+
+  function sanitizeSavedInv(rawInv, m) {
+    const catIds = new Set((m === 'tactical' ? TACTICAL_RELICS : OVERDRIVE_RELICS).map(r => r.id));
+    const toolIds = new Set(TOOLS.map(t => t.id));
+    const slotCap = m === 'tactical' ? tuning.tacSlots : tuning.odSlots;
+    const owned = Array.isArray(rawInv?.owned) ? [...new Set(rawInv.owned.filter(id => catIds.has(id)))] : [];
+    const ownedSet = new Set(owned);
+    const equipped = Array.isArray(rawInv?.equipped)
+      ? [...new Set(rawInv.equipped.filter(id => ownedSet.has(id)))].slice(0, slotCap)
+      : [];
+    const tools = Array.isArray(rawInv?.tools)
+      ? rawInv.tools.filter(id => toolIds.has(id)).slice(0, 3)
+      : (m === 'tactical' ? ['swap'] : ['blast']);
+    const clampMut = v => (typeof v === 'number' && Number.isFinite(v) && v >= 0) ? Math.min(99, Math.floor(v)) : 0;
+    const mutations = {
+      cross: clampMut(rawInv?.mutations?.cross),
+      golden: clampMut(rawInv?.mutations?.golden),
+      prism: clampMut(rawInv?.mutations?.prism)
+    };
+    return { owned, equipped, tools, mutations };
+  }
+
+  function restoreRunState() {
+    let rawStr;
+    try { rawStr = localStorage.getItem(runSaveKey); } catch (_) { return false; }
+    if (!rawStr) return false;
+    try {
+      const saved = JSON.parse(rawStr);
+      if (!saved || saved.version !== 1) { clearRunSave(); return false; }
+      if (saved.mode !== 'tactical' && saved.mode !== 'overdrive') { clearRunSave(); return false; }
+      if (saved.phase !== 'stage' && saved.phase !== 'shop') { clearRunSave(); return false; }
+      const stg = Number(saved.stage);
+      const gSz = Number(saved.gridSize);
+      const coins = Number(saved.coins);
+      const taps = Number(saved.taps);
+      if (!Number.isInteger(stg) || stg < 1 || stg > 999) { clearRunSave(); return false; }
+      if (!Number.isInteger(gSz) || gSz < 6 || gSz > 8) { clearRunSave(); return false; }
+      if (!Number.isFinite(coins) || coins < 0 || !Number.isFinite(taps) || taps < 0) { clearRunSave(); return false; }
+
+      mode = saved.mode;
+      document.body.setAttribute('data-mode', mode);
+      document.getElementById('btnTac').className = 'mode-btn ' + (mode === 'tactical' ? 'active-tac' : '');
+      document.getElementById('btnOvd').className = 'mode-btn ' + (mode === 'overdrive' ? 'active-ovd' : '');
+
+      state.inv.tactical = sanitizeSavedInv(saved.inv?.tactical, 'tactical');
+      state.inv.overdrive = sanitizeSavedInv(saved.inv?.overdrive, 'overdrive');
+      state.stage = stg;
+      state.maxTaps = 15;
+      state.taps = Math.min(mode === 'tactical' ? state.maxTaps : 15, Math.floor(taps));
+      state.coins = Math.floor(coins);
+      state.score = Math.max(0, Math.floor(Number(saved.score) || 0));
+      state.runScore = Math.max(state.score, Math.floor(Number(saved.runScore) || 0));
+      state.maxChainStage = Math.max(0, Math.floor(Number(saved.maxChainStage) || 0));
+      state.maxChainRun = Math.max(state.maxChainStage, Math.floor(Number(saved.maxChainRun) || 0));
+      state.gridSize = gSz;
+      state.burstLv = Math.max(2, Math.min(20, Math.floor(Number(saved.burstLv) || tuning.initBurstLv)));
+      state.wave = Math.max(1, Math.floor(Number(saved.wave) || 1));
+      state.waveMult = Math.max(1, Number(saved.waveMult) || 1.0);
+      state.snowballBonus = Math.max(0, Math.floor(Number(saved.snowballBonus) || 0));
+      state.rerollCost = Math.max(2, Math.floor(Number(saved.rerollCost) || 2));
+      state.shopBaseReward = Math.max(0, Math.floor(Number(saved.shopBaseReward) || 0));
+      state.shopTapBonus = Math.max(0, Math.floor(Number(saved.shopTapBonus) || 0));
+      state.phaseShiftUsed = !!saved.phaseShiftUsed;
+      state.pushUsed = !!saved.pushUsed;
+      state.mirrorShieldActive = !!saved.mirrorShieldActive;
+      state.wave2Done = !!saved.wave2Done;
+      state.startBest = saved.startBest ? sanitizeRecordEntry(saved.startBest) : { ...records[mode] };
+      state.tappedThisStage = false;
+      state.busy = false;
+      state.chainCount = 0;
+      state.refillsThisTap = 0;
+      state.crossBurstCount = 0;
+      state.activeTool = null;
+      state.swapFirst = null;
+      state.pendingRefill = false;
+      state.runOver = false;
+      state.hitstop = 0;
+      state.hitstopCd = 0;
+      droplets = []; particles = []; rings = []; floaters = [];
+
+      if (mode === 'overdrive') {
+        state.bossMod = (state.stage % 3 === 0) ? BOSS_MODS[(Math.floor(state.stage / 3) - 1) % BOSS_MODS.length] : null;
+        state.targetScore = calcOverdriveTarget(state.stage);
+      } else {
+        state.bossMod = null;
+      }
+
+      const validTypes = new Set(['normal', 'cross', 'golden', 'prism']);
+      if (saved.phase === 'stage') {
+        if (!Array.isArray(saved.grid) || saved.grid.length !== gSz) { clearRunSave(); return false; }
+        createEmptyBoard(gSz);
+        let atomCount = 0;
+        for (let r = 0; r < gSz; r++) {
+          if (!Array.isArray(saved.grid[r]) || saved.grid[r].length !== gSz) { clearRunSave(); return false; }
+          for (let c = 0; c < gSz; c++) {
+            const b = saved.bumpers?.[r]?.[c];
+            if (b === '/' || b === '\\') bumpers[r][c] = b;
+            const cell = saved.grid[r][c];
+            if (cell && typeof cell === 'object') {
+              const bLv = Math.max(2, Math.min(25, Math.floor(Number(cell.burstLv) || state.burstLv)));
+              const lv = Math.max(1, Math.min(bLv - 1, Math.floor(Number(cell.lv) || 1)));
+              const tp = validTypes.has(cell.type) ? cell.type : 'normal';
+              const arm = (cell.armor === 'UD' || cell.armor === 'LR') ? cell.armor : null;
+              const drop = makeDrop(lv, bLv, { type: tp, frozen: !!cell.frozen, armor: arm });
+              drop.scale = 1;
+              if (cell.bonusBase > 0) drop.bonusBase = Math.floor(cell.bonusBase);
+              grid[r][c] = drop;
+              atomCount++;
+            }
+          }
+        }
+        if (atomCount === 0 || state.taps <= 0) { clearRunSave(); return false; }
+        state.wave2Preview = Array.isArray(saved.wave2Preview)
+          ? saved.wave2Preview.filter(p => p && Number.isInteger(p.r) && p.r >= 0 && p.r < gSz && Number.isInteger(p.c) && p.c >= 0 && p.c < gSz)
+            .map(p => ({ r: p.r, c: p.c, lv: Math.max(1, Math.min(state.burstLv - 1, Math.floor(Number(p.lv) || 1))), type: p.type === 'cross' ? 'cross' : 'normal' }))
+          : null;
+        state.stageCleared = false;
+      } else {
+        createEmptyBoard(6);
+        populateGrid(false);
+        state.stageCleared = true;
+        shopOffers = [];
+        if (Array.isArray(saved.offers) && saved.offers.length > 0) {
+          const cat = relicCatalog();
+          saved.offers.forEach(o => {
+            if (!o || typeof o !== 'object') return;
+            let item = null;
+            if (o.kind === 'relic') item = cat.find(r => r.id === o.id);
+            else if (o.kind === 'mutation') item = MUTATIONS.find(m => m.id === o.id);
+            else if (o.kind === 'tool') item = TOOLS.find(t => t.id === o.id);
+            else if (o.kind === 'taps') item = { id: 'buy_taps', name: '残弾補給 (+3 TAP)', cost: 3, desc: '次のステージへ持ち越すタップ数を+3回復。' };
+            if (item) shopOffers.push({ kind: o.kind, item, bought: !!o.bought });
+          });
+        }
+        if (shopOffers.length === 0) generateShopOffers();
+        document.getElementById('shopTitle').textContent = `STAGE ${String(state.stage).padStart(2, '0')} CLEAR · SHOP`;
+        document.getElementById('shopSummary').textContent =
+          `クリア報酬 +${state.shopBaseReward}🪙` + (state.shopTapBonus ? ` / 残タップボーナス +${state.shopTapBonus}🪙` : '') + ' · 獲得レリックは控えにも保存され次ステージ前に自由に付け替え可能';
+        renderShop();
+        document.getElementById('shopOverlay').classList.add('open');
+      }
+
+      clampKeyboardCell();
+      updateUI();
+      showToast('💾 前回のランを途中再開しました', '#00e5ff');
+      return true;
+    } catch (_) {
+      clearRunSave();
+      return false;
+    }
+  }
+
   /* ===== Original 72KB Board Generation ===== */
   function createEmptyBoard(size) {
     grid = Array.from({ length: size }, () => Array(size).fill(null));
@@ -1453,6 +2302,7 @@
       armor: opts.armor || null, // null | 'UD' | 'LR'
       scale: 0.15,
       pulse: 0,
+      qJump: 0,
       phase: Math.random() * Math.PI * 2
     };
   }
@@ -1585,13 +2435,18 @@
     }
   }
 
+  let shopTimer = null;
   function startStage(newRun = false) {
+    clearTimeout(shopTimer);
     if (newRun) {
       state.stage = 1;
       state.coins = 4;
+      state.runScore = 0;
+      state.maxChainRun = 0;
       state.snowballBonus = 0;
       state.runOver = false;
       state.taps = mode === 'tactical' ? 10 : 5;
+      state.startBest = { ...records[mode] };
       curInv().owned = [];
       curInv().equipped = [];
       curInv().tools = mode === 'tactical' ? ['swap'] : ['blast'];
@@ -1615,6 +2470,8 @@
     state.swapFirst = null;
     state.pendingRefill = false;
     state.stageCleared = false;
+    state.hitstop = 0;
+    state.hitstopCd = 0;
     droplets = [];
     particles = [];
     rings = [];
@@ -1637,17 +2494,21 @@
     populateGrid(false);
     clampKeyboardCell();
     updateUI();
+    if (!newRun && shouldAutosaveStage()) saveRunState('stage');
   }
 
   window.restartRun = function() {
+    clearRunSave();
     closeModal('resultOverlay');
     closeModal('shopOverlay');
     closeLoadoutSheet();
+    AudioSys.mechClick('equip');
     startStage(true);
   };
 
   window.switchMode = function(m) {
     if (mode === m) return;
+    clearRunSave();
     mode = m;
     document.body.setAttribute('data-mode', m);
     document.getElementById('btnTac').className = 'mode-btn ' + (m === 'tactical' ? 'active-tac' : '');
@@ -1655,6 +2516,7 @@
     closeModal('resultOverlay');
     closeModal('shopOverlay');
     closeLoadoutSheet();
+    AudioSys.mechClick('equip');
     startStage(true);
     resizeCanvas();
   };
@@ -1694,11 +2556,12 @@
     const cellSz = boardPx / state.gridSize;
     const cx = (c + 0.5) * cellSz;
     const cy = (r + 0.5) * cellSz;
+    const prevScore = state.score;
     grid[r][c] = null;
 
     state.chainCount++;
     if (state.chainCount > state.maxChainStage) state.maxChainStage = state.chainCount;
-    AudioSys.pop(state.chainCount, directTap);
+    if (state.chainCount > state.maxChainRun) state.maxChainRun = state.chainCount;
     state.shake = Math.min(8, state.shake + (directTap ? 4 : 2.2));
 
     const pColor = drop.type === 'golden' ? '#ffb020' : drop.type === 'prism' ? '#c084fc' : drop.type === 'cross' ? '#ff4d94' : (mode === 'overdrive' ? '#ff9e2c' : '#ff4d94');
@@ -1707,6 +2570,7 @@
     spawnParticles(cx, cy, pColor, 15);
     spawnParticles(cx, cy, '#ffffff', 5);
 
+    let crit = false;
     if (mode === 'tactical') {
       const step = hasRelic('chain_tax') ? 2 : 3;
       if (state.chainCount % step === 0) {
@@ -1720,7 +2584,10 @@
           addFloater(cx, cy - 10, '+1 🪙', '#ffb020', 13);
         }
       }
-      state.score += 10 * state.chainCount;
+      const tacPts = 10 * state.chainCount;
+      state.score += tacPts;
+      state.runScore += tacPts;
+      AudioSys.pop(state.chainCount, directTap, false);
     } else {
       let base = 10 + state.snowballBonus + (drop.bonusBase || 0);
       if (drop.type === 'golden') {
@@ -1734,14 +2601,17 @@
         mult *= 2.5;
         triggerRelicProc('last_stand');
       }
-      let crit = false;
       if (hasRelic('crit_pop') && Math.random() < prob(0.20)) {
         mult *= 4.0;
         crit = true;
         triggerRelicProc('crit_pop');
+        triggerHitstop(26);
       }
       const pts = Math.round((base + state.chainCount * 2) * mult);
       state.score += pts;
+      state.runScore += pts;
+      if (prevScore < state.targetScore && state.score >= state.targetScore) triggerHitstop(30);
+      AudioSys.pop(state.chainCount, directTap, crit);
       addFloater(cx, cy, (crit ? 'CRIT! +' : '+') + pts, crit ? '#fde047' : '#ffffff', crit ? 15 : 12);
 
       if (hasRelic('chain_ripple') && state.chainCount % 5 === 0) {
@@ -1764,9 +2634,11 @@
     if (mode === 'tactical' && directTap && hasRelic('overcharge_det')) {
       dirs = [[0, -1], [0, 1], [-1, 0], [1, 0], [-1, -1], [1, -1], [-1, 1], [1, 1]];
       triggerRelicProc('overcharge_det');
+      triggerHitstop(28);
     }
     if (drop.type === 'prism') {
       dirs = [[0, -1], [1, 0], [-1, 0], [0, 1], [-1, -1], [1, 1]];
+      triggerHitstop(24);
     }
 
     if (mode === 'overdrive' && state.bossMod && state.bossMod.id === 'wind') {
@@ -1810,13 +2682,16 @@
         state.wave2Done = true;
         state.wave = 2;
         showCutin('⚡ WAVE 2 出現！', '#00e5ff', 950);
-        AudioSys.chime(true);
+        AudioSys.fanfare('wave', 2);
+        triggerHitstop(28);
         for (const p of state.wave2Preview) {
           if (!bumpers[p.r][p.c]) {
             grid[p.r][p.c] = makeDrop(p.lv, state.burstLv, { type: p.type });
           }
         }
         state.wave2Preview = null;
+      } else if (mode === 'tactical') {
+        triggerHitstop(30);
       }
     }
   }
@@ -1831,6 +2706,7 @@
     if (drop.armor && !directTap) {
       const horiz = Math.abs(vx) >= Math.abs(vy);
       if ((drop.armor === 'LR' && horiz) || (drop.armor === 'UD' && !horiz)) {
+        AudioSys.armorBlock(false);
         spawnParticles(cx, cy, '#b4c6e0', 6);
         addFloater(cx, cy, '🛡', '#cbd5e1', 12);
         return true;
@@ -1846,7 +2722,10 @@
           broke = true;
         }
       });
-      if (broke) triggerRelicProc('armor_breaker');
+      if (broke) {
+        triggerRelicProc('armor_breaker');
+        AudioSys.armorBlock(true);
+      }
     }
 
     if (drop.frozen) {
@@ -1854,7 +2733,7 @@
       spawnRing(cx, cy, '#7cefff', cellSz * 0.75);
       spawnParticles(cx, cy, '#bae6fd', 10);
       addFloater(cx, cy, '解凍!', '#00e5ff', 12);
-      AudioSys.pop(1, false);
+      AudioSys.shatter();
       return true;
     }
 
@@ -1870,10 +2749,11 @@
 
     drop.lv++;
     drop.pulse = 1.0;
+    drop.qJump = 1.0;
     if (drop.lv >= drop.burstLv) {
       burstCell(r, c, directTap);
     } else {
-      AudioSys.pop(1, false);
+      AudioSys.excite(Math.max(1, drop.burstLv - drop.lv), directTap);
       spawnRing(cx, cy, '#ffffff', cellSz * 0.55);
     }
     return true;
@@ -1904,7 +2784,8 @@
     }
     showCutin(`⚡ WAVE ${state.wave} (${state.gridSize}×${state.gridSize} / Lv.${state.burstLv} / ×${state.waveMult})`, waveColor(state.wave), 1100);
     bumpMultCore();
-    AudioSys.chime(true);
+    triggerHitstop(32);
+    AudioSys.fanfare('wave', state.wave);
     populateGrid(true);
     updateUI();
   }
@@ -1944,20 +2825,91 @@
       : (4 + Math.min(5, Math.floor(state.stage / 3)));
     const tapBonus = mode === 'overdrive' ? state.taps * 2 : 0;
     state.coins += baseReward + tapBonus;
+    state.shopBaseReward = baseReward;
+    state.shopTapBonus = tapBonus;
+    commitBestRecords();
     pulseCoin();
     AudioSys.chime(true);
     showCutin(`STAGE ${state.stage} CLEAR! +${baseReward + tapBonus}🪙`, '#00e58b', 1200);
     updateUI();
-    setTimeout(() => openShop(baseReward, tapBonus), 650);
+    clearTimeout(shopTimer);
+    shopTimer = setTimeout(() => { if (state.stageCleared && !state.runOver) openShop(baseReward, tapBonus); }, 650);
   }
 
   function onGameOver() {
     state.runOver = true;
+    clearRunSave();
     AudioSys.chime(false);
+
+    const prev = state.startBest || { stage: 0, score: 0, chain: 0 };
+    const isNewStage = state.stage > prev.stage;
+    const isNewScore = state.runScore > prev.score && state.runScore > 0;
+    const isNewChain = state.maxChainRun > prev.chain && state.maxChainRun > 0;
+    commitBestRecords();
+    updateUI();
+
+    const inv = curInv();
+    const maxS = maxSlots();
+    const area = Math.floor((state.stage - 1) / 3) + 1;
+    const sub = ((state.stage - 1) % 3) + 1;
+    const stageDisp = mode === 'tactical'
+      ? `Stage ${String(state.stage).padStart(2, '0')}`
+      : `Area ${area}-${sub} (S${state.stage})`;
+
+    state.lastShareText =
+      `⚡ Lectron [${mode.toUpperCase()}]\n` +
+      `到達: ${stageDisp} | スコア: ${state.runScore.toLocaleString()} | 最大連鎖: ${state.maxChainRun} | 装備レリック: ${inv.equipped.length}/${maxS}\n` +
+      `#Lectron`;
+
+    const badge = '<span class="new-best-badge">NEW BEST</span>';
+    const best = records[mode];
+    const bestStageDisp = mode === 'tactical'
+      ? `Stage ${String(best.stage).padStart(2, '0')}`
+      : `Area ${Math.floor((best.stage - 1) / 3) + 1}-${((best.stage - 1) % 3) + 1}`;
+    document.getElementById('resTitle').textContent = (isNewStage || isNewScore || isNewChain) ? '🏆 NEW RECORD · RUN ENDED' : '💥 RUN ENDED';
+    document.getElementById('resTitle').style.color = (isNewStage || isNewScore || isNewChain) ? 'var(--amber)' : 'var(--pink)';
     document.getElementById('resBody').innerHTML =
-      `モード：<strong>${mode.toUpperCase()}</strong><br>到達ステージ：<strong>Stage ${state.stage}</strong><br>スコア：<strong>${state.score.toLocaleString()}</strong><br>最大連鎖：<strong>${state.maxChainStage}</strong>`;
+      `<div class="res-stats">` +
+        `<div class="res-row"><span>モード</span><span class="res-val-wrap">${mode.toUpperCase()}</span></div>` +
+        `<div class="res-row"><span>到達ステージ</span><span class="res-val-wrap">${isNewStage ? badge : ''}<span>${stageDisp}</span></span></div>` +
+        `<div class="res-row"><span>累計スコア</span><span class="res-val-wrap">${isNewScore ? badge : ''}<span>${state.runScore.toLocaleString()}</span></span></div>` +
+        `<div class="res-row"><span>最大連鎖</span><span class="res-val-wrap">${isNewChain ? badge : ''}<span>${state.maxChainRun}</span></span></div>` +
+        `<div class="res-row"><span>装備レリック</span><span class="res-val-wrap"><span>${inv.equipped.length} / ${maxS}</span></span></div>` +
+      `</div>` +
+      `<div class="res-best-foot" style="margin-top:6px;">自己ベスト — ${bestStageDisp} · ${best.score.toLocaleString()} pt · ${best.chain} 連鎖</div>`;
     document.getElementById('resultOverlay').classList.add('open');
   }
+
+  window.copyRunShare = function() {
+    const text = state.lastShareText;
+    if (!text) return;
+    AudioSys.mechClick('equip');
+    const fallbackCopy = () => {
+      try {
+        const ta = document.createElement('textarea');
+        ta.value = text;
+        ta.setAttribute('readonly', '');
+        ta.style.position = 'fixed';
+        ta.style.opacity = '0';
+        document.body.appendChild(ta);
+        ta.select?.();
+        const ok = document.execCommand?.('copy');
+        ta.remove?.();
+        if (ok) showToast('📋 戦績テキストをコピーしました！', '#00e58b');
+        else showToast('⚠️ クリップボードへコピーできませんでした', '#ffb020');
+      } catch (_) {
+        showToast('⚠️ クリップボードへコピーできませんでした', '#ffb020');
+      }
+    };
+    if (navigator.clipboard && typeof navigator.clipboard.writeText === 'function') {
+      navigator.clipboard.writeText(text).then(
+        () => showToast('📋 戦績テキストをコピーしました！', '#00e58b'),
+        fallbackCopy
+      );
+    } else {
+      fallbackCopy();
+    }
+  };
 
   /* ===== Input Handling (Original 72KB Tools + Skills) ===== */
   function clampKeyboardCell() {
@@ -2011,6 +2963,7 @@
       if (!grid[r][c]) return;
       if (!state.swapFirst) {
         state.swapFirst = { r, c };
+        AudioSys.mechClick('equip');
         updateUI();
       } else {
         const a = state.swapFirst;
@@ -2020,8 +2973,9 @@
         consumeTool('swap');
         state.swapFirst = null;
         state.activeTool = null;
-        AudioSys.pop(3, false);
+        AudioSys.mechClick('equip');
         updateUI();
+        if (!state.tappedThisStage && shouldAutosaveStage()) saveRunState('stage');
       }
       return;
     }
@@ -2041,11 +2995,13 @@
     if (state.activeTool === 'phase_shift') {
       if (!grid[r][c]) return;
       grid[r][c].type = grid[r][c].type === 'cross' ? 'normal' : 'cross';
+      grid[r][c].qJump = 1.0;
       state.phaseShiftUsed = true;
       state.activeTool = null;
       triggerRelicProc('phase_shift');
-      AudioSys.pop(4, false);
+      AudioSys.excite(2, true);
       updateUI();
+      if (!state.tappedThisStage && shouldAutosaveStage()) saveRunState('stage');
       return;
     }
 
@@ -2053,6 +3009,7 @@
       if (!state.swapFirst) {
         if (!grid[r][c]) return;
         state.swapFirst = { r, c };
+        AudioSys.mechClick('equip');
         updateUI();
       } else {
         const a = state.swapFirst;
@@ -2064,8 +3021,9 @@
           state.swapFirst = null;
           state.activeTool = null;
           triggerRelicProc('push_one');
-          AudioSys.pop(3, false);
+          AudioSys.mechClick('equip');
           updateUI();
+          if (!state.tappedThisStage && shouldAutosaveStage()) saveRunState('stage');
         } else {
           state.swapFirst = null;
           updateUI();
@@ -2086,7 +3044,9 @@
   }
 
   function beginTapSequence(spendTap) {
+    const wasUnlocked = !state.tappedThisStage;
     state.tappedThisStage = true;
+    if (wasUnlocked) AudioSys.mechClick('lock');
     state.busy = true;
     if (spendTap) state.taps--;
     state.chainCount = 0;
@@ -2105,6 +3065,7 @@
     if (state.activeTool) {
       state.activeTool = null;
       state.swapFirst = null;
+      AudioSys.mechClick('equip');
       updateUI();
     }
   };
@@ -2137,16 +3098,20 @@
 
   function openShop(baseReward = 0, tapBonus = 0) {
     state.rerollCost = 2;
+    state.shopBaseReward = baseReward;
+    state.shopTapBonus = tapBonus;
     generateShopOffers();
     document.getElementById('shopTitle').textContent = `STAGE ${String(state.stage).padStart(2, '0')} CLEAR · SHOP`;
     document.getElementById('shopSummary').textContent =
       `クリア報酬 +${baseReward}🪙` + (tapBonus ? ` / 残タップボーナス +${tapBonus}🪙` : '') + ' · 獲得レリックは控えにも保存され次ステージ前に自由に付け替え可能';
     renderShop();
     document.getElementById('shopOverlay').classList.add('open');
+    saveRunState('shop');
   }
 
   function renderShop() {
     document.getElementById('shopCoins').textContent = state.coins;
+    renderMutationStatus();
     const rrBtn = document.getElementById('btnReroll');
     rrBtn.textContent = `🎲 リロール (${state.rerollCost}🪙)`;
     rrBtn.disabled = state.coins < state.rerollCost;
@@ -2159,7 +3124,7 @@
         ? relicIcon(o.item.id)
         : (o.kind === 'tool' ? o.item.icon : (o.kind === 'mutation' ? '✦' : '+3'));
       div.innerHTML = `<div class="card-icon" style="font-size:13px;font-weight:900;">${iconHtml}</div>
-        <div class="card-info"><div class="card-name">${o.item.name}</div><div class="card-desc">${o.item.desc}</div></div>
+        <div class="card-info"><div class="card-title-row"><span class="card-name">${o.item.name}</span>${roleBadgeHtml(o.kind, o.item)}</div><div class="card-desc">${o.item.desc}</div></div>
         <button class="btn-amber" ${o.bought || state.coins < o.item.cost ? 'disabled' : ''}>${o.bought ? '済' : o.item.cost + '🪙'}</button>`;
       div.querySelector('button').onclick = () => {
         if (o.bought || state.coins < o.item.cost) return;
@@ -2184,9 +3149,10 @@
         } else if (o.kind === 'taps') {
           state.taps = Math.min(state.maxTaps, state.taps + 3);
         }
-        AudioSys.chime(true);
+        AudioSys.mechClick('buy');
         renderShop();
         updateUI();
+        saveRunState('shop');
       };
       list.appendChild(div);
     });
@@ -2196,12 +3162,15 @@
     if (state.coins < state.rerollCost) return;
     state.coins -= state.rerollCost;
     state.rerollCost++;
+    AudioSys.mechClick('buy');
     generateShopOffers();
     renderShop();
     updateUI();
+    saveRunState('shop');
   };
 
   window.nextStageFromShop = function() {
+    AudioSys.mechClick('equip');
     closeModal('shopOverlay');
     state.stage++;
     startStage(false);
@@ -2213,6 +3182,7 @@
     if (sheet.classList.contains('open')) {
       closeLoadoutSheet();
     } else {
+      AudioSys.mechClick('equip');
       renderLoadout();
       sheet.classList.add('open');
       sheet.inert = false;
@@ -2237,6 +3207,7 @@
     document.getElementById('loadoutNote').textContent = canEdit
       ? 'UNLOCKED · 上の盤面を見ながらワンタップで装備⇔控えを入替可能'
       : 'LOCKED · すでにタップ済みのため、次のステージ開始時に組み替え可能';
+    renderMutationStatus();
 
     const eqBox = document.getElementById('equippedList');
     const bnBox = document.getElementById('benchList');
@@ -2249,12 +3220,14 @@
       const div = document.createElement('div');
       div.className = 'card equipped';
       div.innerHTML = `<div class="card-icon">${relicIcon(r.id)}</div>
-        <div class="card-info"><div class="card-name">${r.name}</div><div class="card-desc">${r.desc}</div></div>
+        <div class="card-info"><div class="card-title-row"><span class="card-name">${r.name}</span>${roleBadgeHtml('relic', r)}</div><div class="card-desc">${r.desc}</div></div>
         <button class="btn-ghost" ${!canEdit ? 'disabled' : ''}>外す</button>`;
       div.querySelector('button').onclick = () => {
         if (!canEdit) return;
         inv.equipped = inv.equipped.filter(x => x !== id);
+        AudioSys.mechClick('equip');
         renderLoadout(); updateUI();
+        if (shouldAutosaveStage()) saveRunState('stage');
       };
       eqBox.appendChild(div);
     });
@@ -2267,39 +3240,53 @@
       const div = document.createElement('div');
       div.className = 'card';
       div.innerHTML = `<div class="card-icon">${relicIcon(r.id)}</div>
-        <div class="card-info"><div class="card-name">${r.name}</div><div class="card-desc">${r.desc}</div></div>
+        <div class="card-info"><div class="card-title-row"><span class="card-name">${r.name}</span>${roleBadgeHtml('relic', r)}</div><div class="card-desc">${r.desc}</div></div>
         <button class="btn-primary" ${(!canEdit || inv.equipped.length >= maxSlots()) ? 'disabled' : ''}>装備</button>`;
       div.querySelector('button').onclick = () => {
         if (!canEdit || inv.equipped.length >= maxSlots()) return;
         inv.equipped.push(id);
+        AudioSys.mechClick('equip');
         renderLoadout(); updateUI();
+        if (shouldAutosaveStage()) saveRunState('stage');
       };
       bnBox.appendChild(div);
     });
     if (bench.length === 0) bnBox.innerHTML = '<div style="font-size:11px;color:var(--mute)">控えなし（ショップで追加）</div>';
   }
 
-  /* ===== Live Tuning Hatch (Original 72KB Params + Peek) ===== */
+  /* ===== Modals & Live Tuning Hatch ===== */
   window.toggleMute = function() {
     AudioSys.muted = !AudioSys.muted;
     syncPreferencesUI();
+    if (!AudioSys.muted) AudioSys.mechClick('equip');
     saveOrWarn();
+  };
+
+  window.openHelp = function() {
+    closeLoadoutSheet();
+    AudioSys.mechClick('equip');
+    document.getElementById('helpOverlay').classList.add('open');
+    document.getElementById('btnHelpClose').focus();
   };
 
   window.closeModal = function(id) {
     const el = document.getElementById(id);
+    if (!el) return;
     el.classList.remove('open');
     if (id === 'tuneOverlay') {
       state.peekMode = false;
       el.classList.remove('peek-mode');
       document.getElementById('btnPeek').classList.remove('active-peek');
       if (el.contains(document.activeElement)) document.getElementById('btnTune').focus();
+    } else if (id === 'helpOverlay') {
+      if (el.contains(document.activeElement)) document.getElementById('btnHelp').focus();
     }
   };
 
   window.openTuning = function() {
     closeLoadoutSheet();
     syncTuningUI();
+    AudioSys.mechClick('equip');
     document.getElementById('tuneOverlay').classList.add('open');
     document.getElementById('btnPeek').focus();
   };
@@ -2409,8 +3396,9 @@
       }
       pipEl.innerHTML = pipHtml;
     } else {
-      document.getElementById('valScoreOvd').textContent = state.score.toLocaleString();
-      document.getElementById('valTargetOvd').textContent = `/ ${state.targetScore.toLocaleString()}`;
+      const fmtNum = n => n >= 1e9 ? n.toExponential(2) : n.toLocaleString();
+      document.getElementById('valScoreOvd').textContent = fmtNum(state.score);
+      document.getElementById('valTargetOvd').textContent = `/ ${fmtNum(state.targetScore)}`;
       const pct = Math.min(100, (state.score / Math.max(1, state.targetScore)) * 100);
       const fill = document.getElementById('pressureFill');
       fill.style.width = pct.toFixed(1) + '%';
@@ -2421,7 +3409,7 @@
       const mc = document.getElementById('multCore');
       mc.style.borderColor = wc;
       document.getElementById('valMult').style.color = wc;
-      document.getElementById('valMult').textContent = `×${state.waveMult}`;
+      document.getElementById('valMult').textContent = `×${state.waveMult >= 1e6 ? state.waveMult.toExponential(1) : state.waveMult}`;
       document.getElementById('valWaveSub').textContent = (state.bossMod && state.bossMod.id === 'onetap') ? `W${state.wave} · 2X` : `WAVE ${state.wave}`;
     }
   }
@@ -2439,6 +3427,16 @@
       ? `STAGE ${String(state.stage).padStart(2, '0')}`
       : `AREA ${area}-${sub}`;
     document.getElementById('subStage').textContent = `${state.gridSize}×${state.gridSize} · Lv.${state.burstLv}`;
+
+    const best = records[mode];
+    const hudBest = document.getElementById('hudBest');
+    if (best && best.stage > 0) {
+      hudBest.hidden = false;
+      hudBest.textContent = `· BEST ${formatBestStage(mode, best.stage)}`;
+      hudBest.title = `自己ベスト (${mode.toUpperCase()}) — 到達: Stage ${best.stage} / 累計: ${best.score.toLocaleString()} / 最大連鎖: ${best.chain}`;
+    } else {
+      hudBest.hidden = true;
+    }
 
     const badgeWrap = document.getElementById('stageBadgeWrap');
     if (isTac) {
@@ -2466,6 +3464,7 @@
     }
 
     updateLiveHUD();
+    renderMutationStatus();
     if (document.activeElement === canvas) describeKeyboardCell();
 
     // Status strip & chassis aim states
@@ -2526,11 +3525,14 @@
         if (tid === 'mirror') {
           state.mirrorShieldActive = true;
           curInv().tools.splice(idx, 1);
+          AudioSys.reflect(true);
           showCutin('◈ ミラーシールド展開！', '#00e5ff', 850);
           updateUI();
+          if (!state.tappedThisStage && shouldAutosaveStage()) saveRunState('stage');
         } else {
           state.activeTool = state.activeTool === tid ? null : tid;
           state.swapFirst = null;
+          AudioSys.mechClick('equip');
           updateUI();
         }
         if (e.detail === 0) canvas.focus();
@@ -2547,6 +3549,7 @@
         if (state.busy || state.phaseShiftUsed) return;
         state.activeTool = state.activeTool === 'phase_shift' ? null : 'phase_shift';
         state.swapFirst = null;
+        AudioSys.mechClick('equip');
         updateUI();
         if (e.detail === 0) canvas.focus();
       };
@@ -2561,6 +3564,7 @@
         if (state.busy || state.pushUsed) return;
         state.activeTool = state.activeTool === 'push_one' ? null : 'push_one';
         state.swapFirst = null;
+        AudioSys.mechClick('equip');
         updateUI();
         if (e.detail === 0) canvas.focus();
       };
@@ -2579,8 +3583,8 @@
     const deck = document.getElementById('relicDeck');
     deck.classList.toggle('unlocked', canSwap);
     document.getElementById('lockLabel').textContent = canSwap
-      ? 'UNLOCKED · タップで装備入替'
-      : 'LOCKED · 戦闘中（次面で入替可）';
+      ? (isTac ? 'UNLOCKED · タップで装備入替' : 'UNLOCKED · 装備入替')
+      : (isTac ? 'LOCKED · 戦闘中（次面で入替可）' : 'LOCKED · 戦闘中');
     document.getElementById('slotSummary').textContent = `装備 ${inv.equipped.length}/${maxS} · 控え ${benchCount}`;
 
     const slotsEl = document.getElementById('relicSlots');
@@ -2603,6 +3607,15 @@
   function loop(ts) {
     const dt = Math.min(0.04, (ts - lastTs) / 1000 || 0.016);
     lastTs = ts;
+
+    if (reducedMotion()) state.hitstop = 0;
+    if (state.hitstopCd > 0) state.hitstopCd = Math.max(0, state.hitstopCd - dt);
+    if (state.hitstop > 0) {
+      state.hitstop = Math.max(0, state.hitstop - dt);
+      drawBoard(ts);
+      requestAnimationFrame(loop);
+      return;
+    }
 
     const chainSpeed = state.chainCount >= 60 ? 2.0 : state.chainCount >= 30 ? 1.5 : state.chainCount >= 15 ? 1.25 : 1.0;
     const simDt = dt * chainSpeed;
@@ -2653,14 +3666,17 @@
           spawnParticles(d.x, d.y, '#ffb020', 5);
         } else { droplets.splice(i, 1); continue; }
       }
-      if (hitEdge && mode === 'overdrive' && hasRelic('split_bounce') && Math.random() < prob(0.40) && droplets.length < 80) {
-        triggerRelicProc('split_bounce');
-        droplets.push({
-          x: d.x, y: d.y,
-          vx: d.vx * 0.85 - d.vy * 0.4,
-          vy: d.vy * 0.85 + d.vx * 0.4,
-          pierce: d.pierce, bouncesLeft: 0, bounced: true, lastCell: '', color: '#ff70ab'
-        });
+      if (hitEdge) {
+        AudioSys.reflect(false);
+        if (mode === 'overdrive' && hasRelic('split_bounce') && Math.random() < prob(0.40) && droplets.length < 80) {
+          triggerRelicProc('split_bounce');
+          droplets.push({
+            x: d.x, y: d.y,
+            vx: d.vx * 0.85 - d.vy * 0.4,
+            vy: d.vy * 0.85 + d.vx * 0.4,
+            pierce: d.pierce, bouncesLeft: 0, bounced: true, lastCell: '', color: '#ff70ab'
+          });
+        }
       }
 
       const c = Math.floor(d.x / cellSz);
@@ -2676,6 +3692,7 @@
         if (b === '/') { d.vx = -ovy; d.vy = -ovx; }
         else { d.vx = ovy; d.vy = ovx; }
         const bx = (c + 0.5) * cellSz, by = (r + 0.5) * cellSz;
+        AudioSys.reflect(true);
         spawnRing(bx, by, '#00e5ff', cellSz * 0.6);
         spawnParticles(bx, by, '#00e5ff', 6);
         continue;
@@ -2697,6 +3714,8 @@
             const cc = Math.floor(droplets[i].x / cellSz);
             state.crossBurstCount++;
             triggerRelicProc('cross_burst');
+            triggerHitstop(24);
+            AudioSys.pop(state.chainCount + 2, true, false);
             spawnRing(droplets[i].x, droplets[i].y, '#a78bfa', cellSz * 1.4);
             addFloater(droplets[i].x, droplets[i].y, 'CROSS!', '#f472b6', 13);
             for (let dr = -1; dr <= 1; dr++) {
@@ -2724,6 +3743,7 @@
         if (!d) continue;
         if (d.scale < 1) d.scale = Math.min(1, d.scale + dt * 6);
         if (d.pulse > 0) d.pulse = Math.max(0, d.pulse - dt * 5);
+        if (d.qJump > 0) d.qJump = Math.max(0, d.qJump - dt * 5.6);
         if (!d.frozen) {
           const rem = Math.max(1, d.burstLv - d.lv);
           const omega = rem <= 1 ? 7.8 : (rem === 2 ? 4.4 : (rem === 3 ? 2.6 : 1.5));
@@ -2956,11 +3976,18 @@
         const key = getCloudKey(rem, d.type);
         const hex = getCloudHex(key);
 
-        const bounce = !quiet && d.pulse > 0 ? Math.sin(d.pulse * Math.PI * 2.5) * d.pulse * 0.18 : 0;
+        // Quantum Jump: brief orbital contraction (0..0.30) -> leap expansion (0.30..0.68) -> settle
+        let jumpMul = 1;
+        if (!quiet && d.qJump > 0) {
+          const jt = 1 - d.qJump;
+          if (jt < 0.30) jumpMul = 0.86 - 0.31 * Math.sin((jt / 0.30) * Math.PI * 0.5);
+          else if (jt < 0.68) jumpMul = 0.55 + 0.65 * Math.sin(((jt - 0.30) / 0.38) * Math.PI * 0.5);
+          else jumpMul = 1.0 + 0.20 * Math.cos(((jt - 0.68) / 0.32) * Math.PI * 0.5);
+        }
         const breathe = d.frozen || quiet ? 0 : Math.sin(tSec * (rem <= 1 ? 7.5 : (rem === 2 ? 4.2 : 2.2)) + (d.phase || 0)) * (rem <= 1 ? 0.055 : 0.03);
         // Cloud spatial radius expands clearly with excitation (1s -> 2s -> 3s -> critical ionization)
         const baseScale = rem >= 5 ? 0.25 : (rem === 4 ? 0.30 : (rem === 3 ? 0.37 : (rem === 2 ? 0.44 : 0.52)));
-        const cloudR = cs * (baseScale + breathe) * (1 + bounce) * d.scale;
+        const cloudR = cs * (baseScale + breathe) * jumpMul * d.scale;
 
         let x = (c + 0.5) * cs;
         let y = (r + 0.5) * cs;
@@ -3006,6 +4033,10 @@
           if (rem === 1) {
             stampCloud(ctx, 'white', x, y, cloudR * 0.44, 0.9);
           }
+        }
+
+        if (!quiet && d.qJump > 0.45) {
+          stampCloud(ctx, 'white', x, y, cloudR * 0.52, Math.min(0.85, (d.qJump - 0.45) * 1.4));
         }
 
         // Shimmering Quantum Probability Density Dots (Monte Carlo cloud stipple!)
@@ -3207,6 +4238,7 @@
   /* ===== Boot ===== */
   function boot() {
     loadPreferences();
+    loadRecords();
     for (const [, min, max, step, id, label] of Object.values(TUNING_SCHEMA)) {
       const input = document.getElementById(id);
       input.min = min; input.max = max; input.step = step;
@@ -3219,8 +4251,24 @@
       });
     }
     motionQuery.addEventListener?.('change', syncPreferencesUI);
-    document.getElementById('tuneOverlay').addEventListener('keydown', e => {
-      if (e.key === 'Escape') { e.preventDefault(); closeModal('tuneOverlay'); }
+    for (const modalId of ['tuneOverlay', 'helpOverlay']) {
+      const ov = document.getElementById(modalId);
+      ov.addEventListener('keydown', e => {
+        if (e.key === 'Escape') { e.preventDefault(); closeModal(modalId); }
+      });
+      ov.addEventListener('click', e => {
+        if (e.target === ov && !(modalId === 'tuneOverlay' && state.peekMode)) closeModal(modalId);
+      });
+    }
+    document.addEventListener('keydown', e => {
+      if (e.key !== 'Escape') return;
+      if (document.getElementById('helpOverlay').classList.contains('open')) {
+        e.preventDefault(); closeModal('helpOverlay');
+      } else if (document.getElementById('tuneOverlay').classList.contains('open')) {
+        e.preventDefault(); closeModal('tuneOverlay');
+      } else if (document.getElementById('loadoutSheet').classList.contains('open')) {
+        e.preventDefault(); closeLoadoutSheet();
+      }
     });
     syncPreferencesUI();
     syncTuningUI();
@@ -3231,7 +4279,7 @@
       });
     }
     resizeCanvas();
-    startStage(true);
+    if (!restoreRunState()) startStage(true);
     requestAnimationFrame(loop);
   }
   window.addEventListener('resize', resizeCanvas);
