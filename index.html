@@ -1119,6 +1119,48 @@
   }
   body.reduce-motion *, body.reduce-motion *::before, body.reduce-motion *::after { animation-duration:0.01ms !important; transition-duration:0.01ms !important; }
   body.reduce-motion .pulse-beat, body.reduce-motion .relic-slot.proc { transform:none; box-shadow:none; }
+  .route-panel {
+    flex: 1 1 0;
+    min-height: 0;
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    overflow: auto;
+    padding: 4px 3px 8px;
+  }
+  .route-meta, .tac-board-meta { font-size: 12px; color: var(--cyan); font-weight: 800; line-height: 1.4; }
+  .route-meta { position: sticky; top: 0; z-index: 1; background: var(--void); }
+  .tac-board-meta { padding: 3px 7px; background: var(--surface); }
+  .board-chassis.mirror-boundary { box-shadow: inset 0 0 0 2px var(--cyan); }
+  .route-blessings { font-size: 11px; color: var(--amber); overflow-wrap: anywhere; }
+  .route-actions { display: grid; gap: 6px; }
+  .route-card {
+    display: grid;
+    grid-template-columns: 25px minmax(0, 1fr) auto;
+    align-items: center;
+    gap: 7px;
+    min-height: 52px;
+    padding: 6px 8px;
+    border: 1px solid var(--hair-bright);
+    border-radius: 8px;
+    background: var(--surface);
+    color: var(--ink);
+    text-align: left;
+    cursor: pointer;
+  }
+  .route-card:disabled { opacity: .55; cursor: default; }
+  .route-icon { color: var(--cyan); text-align: center; font-size: 19px; }
+  .route-copy { display: grid; gap: 2px; overflow-wrap: anywhere; font-size: 11px; color: var(--ink2); }
+  .route-copy strong { color: var(--ink); font-size: 13px; }
+  .route-reward { color: var(--amber); font-weight: 800; font-size: 10px; max-width: 96px; overflow-wrap: anywhere; }
+  #routeTray { margin-top: auto; }
+  #routeTray .half-sheet { position: static; transform: none; max-height: 30dvh; box-shadow: none; }
+  #routeTray .sheet-body { min-height: 0; }
+  @media (max-height: 560px) {
+    .route-panel { flex: 1 0 auto; }
+    #routeTray .half-sheet { max-height: 200px; }
+  }
 </style>
 </head>
 <body data-mode="tactical">
@@ -1192,6 +1234,14 @@
     </div>
   </div>
 
+  <section class="route-panel" id="routePanel" aria-labelledby="routeMeta" hidden>
+    <div class="route-meta" id="routeMeta" tabindex="-1"></div>
+    <div class="route-blessings" id="routeBlessings" hidden></div>
+    <div class="route-actions" id="routeActions"></div>
+    <div id="routeTray"></div>
+  </section>
+  <div class="tac-board-meta" id="tacBoardMeta" hidden></div>
+
   <!-- Status Strip + Quantum Excitation Scale -->
   <div class="status-strip" id="statusStrip" role="button" tabindex="0" aria-label="選択中のツールを解除" onclick="cancelArmedTool()">
     <span id="bannerLeft">電子雲を励起させ臨界から電離連鎖させろ</span>
@@ -1201,7 +1251,7 @@
   <!-- Board Canvas with Accelerator Chamber Bezel -->
   <div class="board-stage" id="boardWrap">
     <div class="board-chassis" id="boardChassis">
-      <canvas id="board" tabindex="0" aria-label="ゲーム盤面" aria-describedby="boardHelp boardCell"></canvas>
+      <canvas id="board" tabindex="0" aria-label="ゲーム盤面" aria-describedby="boardHelp boardCell tacBoardMeta"></canvas>
       <span id="boardHelp" class="sr-only">矢印キーでセルを選択、Enter または Space で実行、Escape でツール解除。</span>
       <span id="boardCell" class="sr-only" role="status" aria-live="polite"></span>
     </div>
@@ -1209,7 +1259,7 @@
   </div>
 
   <!-- Thumb Deck (Dynamic Tools & Active Skills + Relic Breach Bar) -->
-  <div class="thumb-deck">
+  <div class="thumb-deck" id="thumbDeck">
     <div class="tool-row" id="toolBar"></div>
     <div class="relic-deck unlocked" id="relicDeck" role="button" tabindex="0" aria-controls="loadoutSheet" aria-expanded="false" onclick="toggleLoadoutSheet()">
       <div class="relic-deck-head">
@@ -1225,13 +1275,14 @@
 </div>
 
 <!-- Non-Occluding Half-Sheet Loadout Tray -->
+<div id="loadoutHome">
 <div class="half-sheet" id="loadoutSheet" inert>
   <div class="sheet-head">
     <div>
       <div class="sheet-title">LOADOUT TRAY (<span id="eqCount">0/4</span>)</div>
       <div class="sheet-sub" id="loadoutNote">盤面を見ながら装備⇔控えをワンタップ入替</div>
     </div>
-    <button class="btn-ghost" onclick="closeLoadoutSheet()">閉じる</button>
+    <button class="btn-ghost" id="btnCloseLoadout" onclick="closeLoadoutSheet()">閉じる</button>
   </div>
   <div class="sheet-body">
     <div class="mut-bar" id="loadoutMutBar" hidden></div>
@@ -1240,6 +1291,8 @@
     <div class="sec-lbl">控えライブラリ（クリックで装備）</div>
     <div class="card-grid" id="benchList"></div>
   </div>
+</div>
+
 </div>
 
 <!-- Shop Modal (Original 72KB Unified Offer Structure) -->
@@ -1254,7 +1307,7 @@
     <div class="card-grid" id="shopItems"></div>
     <div style="display:flex;gap:8px;justify-content:space-between;margin-top:4px;">
       <button class="btn-ghost" id="btnReroll" onclick="rerollShop()">🎲 リロール (2🪙)</button>
-      <button class="btn-primary" onclick="nextStageFromShop()">次のステージへ ▶</button>
+      <button class="btn-primary" id="shopExit" onclick="nextStageFromShop()">次のステージへ ▶</button>
     </div>
   </div>
 </div>
@@ -1364,7 +1417,7 @@
       <div class="help-modes">
         <div class="help-mode-card">
           <strong style="color:var(--cyan);">TACTICAL</strong>
-          6×6固定・確率要素なし。残弾を次面へ引継ぎ（3連鎖で+1弾）、全原子を電離すればクリア。
+          3枚から次のカードを選択。戦闘は6×6の全消しでクリアし、残弾を次へ引き継ぐ。異常盤面のルールは戦闘前に確認でき、初弾前まで装備を入替できる。
         </div>
         <div class="help-mode-card">
           <strong style="color:var(--pink);">OVERDRIVE</strong>
@@ -1732,11 +1785,275 @@
     { id: 'edge_reflect_2', name: 'エッジリフレクト', short: '壁反射2', role: '反射', roleCls: 'role-reflect', cost: 4, desc: '各タップにつき、最初に画面端へ当たった電子2発が跳ね返る。' },
     { id: 'phase_shift', name: 'フェーズシフト', short: '方向切替', role: '制御', roleCls: 'role-ctrl', cost: 5, desc: '各ステージ1回、対象マスの射出軌道を「十字↔斜め」に切替できる。' },
     { id: 'push_one', name: 'プッシュ1', short: '1マス移動', role: '制御', roleCls: 'role-ctrl', cost: 4, desc: '各ステージ1回、タップ消費なしで原子を隣接空きマスへ移動できる。' },
-    { id: 'overcharge_det', name: 'オーバーチャージ', short: '8方向電離', role: '連鎖', roleCls: 'role-chain', cost: 5, desc: '臨界原子を直接タップすると、十字＋斜めの8方向へ発射する。' },
-    { id: 'thaw_wave', name: '解凍波', short: '自動解凍2', role: '制御', roleCls: 'role-ctrl', cost: 4, desc: '各ステージ開始時、凍結マスの氷を最大2個自動で融解する。' },
+    { id: 'overcharge_det', rarity: 'rare', name: 'オーバーチャージ', short: '8方向電離', role: '連鎖', roleCls: 'role-chain', cost: 5, desc: '臨界原子を直接タップすると、十字＋斜めの8方向へ発射する。' },
+    { id: 'thaw_wave', rarity: 'rare', name: '解凍波', short: '自動解凍2', role: '制御', roleCls: 'role-ctrl', cost: 4, desc: '各最初の攻撃を始めるとき、凍結マスを最大2個自動で融解する。' },
     { id: 'chain_tax', name: '効率回収', short: '2連鎖+1弾', role: '連鎖', roleCls: 'role-chain', cost: 6, desc: '残弾回復の条件が「3連鎖ごと」から「2連鎖ごと」に短縮される。' },
-    { id: 'armor_breaker', name: '装甲ブレイク', short: '周囲装甲破', role: '貫通', roleCls: 'role-pierce', cost: 5, desc: '直接タップは方向装甲を破壊し、周囲4マスの装甲も剥がす。' }
+    { id: 'armor_breaker', rarity: 'rare', name: '装甲ブレイク', short: '周囲装甲破', role: '貫通', roleCls: 'role-pierce', cost: 5, desc: '直接タップは方向装甲を破壊し、周囲4マスの装甲も剥がす。' }
   ];
+
+  const TACTICAL_ANOMALIES = {
+    freeze: { icon: '❄', name: '絶対零度の静寂', rule: '初期配置の半数以上が氷殻。タップ終了ごとに1セル再凍結。' },
+    armor: { icon: '⬢', name: '重装シェルター', rule: '中央または外周に、向きが揃った方向装甲の壁。' },
+    mirror: { icon: '◇', name: '鏡面迷宮', rule: '偏向板が増え、外周4辺で反射。初期耐久+1〜2。' },
+    cooling: { icon: '◈', name: '不安定炉心', rule: 'ターン終了時、臨界のまま残ったセルは残耐久3に戻る。' },
+    gap: { icon: '✚', name: '真空ギャップ', rule: '十字か斜めの空白帯が盤面を分断。ビームは通過する。' },
+    damping: { icon: '≋', name: '減衰フィールド', rule: '電離ビームは2〜3マス分の距離で消滅。' }
+  };
+  const TACTICAL_BOSSES = [
+    { name: '凍結要塞', traits: ['freeze', 'armor'] },
+    { name: '反射の炉心', traits: ['mirror', 'cooling'] },
+    { name: '真空断層', traits: ['gap', 'damping'] }
+  ];
+  const TACTICAL_BLESSINGS = {
+    reserve: { name: '予備パルス', rule: '戦闘開始時に残弾+1。', repeat: true },
+    ice: { name: '氷殻貫通', rule: '命中したビームが氷殻を割り、その一撃で励起する。' },
+    walls: { name: '反射境界', rule: '各ビームが外周でさらに1回反射。', repeat: true },
+    discount: { name: '量子優待', rule: 'ショップの商品価格が20%引き（四捨五入・最低1）。', repeat: true },
+    chain: { name: '連鎖回収', rule: '戦闘中、各ターンの初回3連鎖で残弾+1。' },
+    clear: { name: '電離配当', rule: '戦闘クリア時にコイン+2。' }
+  };
+  const TACTICAL_CARD_IDS = ['normal-1', 'normal-2', 'normal-3', 'shop', 'supply', 'lab', ...Object.keys(TACTICAL_ANOMALIES)];
+  const MAX_TACTICAL_TAPS = 35;
+  let tacticalRoute = null;
+
+  function tacticalBoss(area = tacticalRoute.area) {
+    return TACTICAL_BOSSES[(area - 1) % TACTICAL_BOSSES.length];
+  }
+
+  function newTacticalArea(area = 1, blessings = {}) {
+    const deck = shuffle([...TACTICAL_CARD_IDS.slice(0, 6), ...shuffle(Object.keys(TACTICAL_ANOMALIES)).slice(0, 2)]);
+    return { area, deck, open: deck.splice(0, 3), blessings, phase: 'cards', active: null, choices: [] };
+  }
+
+  function restoreTacticalRoute(raw, savedPhase) {
+    if (raw == null && (savedPhase === 'stage' || savedPhase === 'shop')) {
+      return { ...newTacticalArea(), phase: savedPhase, active: 'legacy' };
+    }
+    if (!raw || !Number.isSafeInteger(raw.area) || raw.area < 1 ||
+        !Array.isArray(raw.deck) || !Array.isArray(raw.open) || raw.deck.length > 5 || raw.open.length > 3 ||
+        !Array.isArray(raw.choices) || !raw.blessings || typeof raw.blessings !== 'object' ||
+        Array.isArray(raw.blessings)) throw Error('Invalid tactical route');
+    const ids = [...raw.open, ...raw.deck];
+    const active = raw.active;
+    const isCombat = active === 'boss' || active === 'legacy' ||
+      (typeof active === 'string' && (active.startsWith('normal-') || Object.hasOwn(TACTICAL_ANOMALIES, active)));
+    const phaseMatches = (savedPhase === 'route' && ['cards', 'supply', 'lab', 'blessing'].includes(raw.phase)) ||
+      (savedPhase === raw.phase && ['stage', 'shop'].includes(raw.phase));
+    if (!phaseMatches || ids.length > 8 || !ids.every(id => TACTICAL_CARD_IDS.includes(id)) ||
+        new Set(ids).size !== ids.length || (raw.deck.length && raw.open.length !== 3) ||
+        (raw.phase === 'cards' && active !== null) ||
+        (raw.phase === 'stage' && !isCombat) ||
+        (raw.phase === 'stage' && !['boss', 'legacy'].includes(active) && !raw.open.includes(active)) ||
+        (['shop', 'supply', 'lab'].includes(raw.phase) && !(active === raw.phase && raw.open.includes(active)) &&
+          !(raw.phase === 'shop' && active === 'legacy')) ||
+        (active === 'boss' && ids.length !== 0) ||
+        (raw.phase === 'blessing' && (active !== 'boss' || raw.choices.length !== 3 ||
+          new Set(raw.choices).size !== 3 || !raw.choices.every(id => Object.hasOwn(TACTICAL_BLESSINGS, id))))) {
+      throw Error('Invalid tactical card state');
+    }
+    const blessings = {};
+    for (const [id, value] of Object.entries(raw.blessings)) {
+      if (!Object.hasOwn(TACTICAL_BLESSINGS, id) || !Number.isSafeInteger(value) || value < 1 ||
+          value > raw.area - 1 || (!TACTICAL_BLESSINGS[id].repeat && value !== 1)) throw Error('Invalid blessing');
+      blessings[id] = value;
+    }
+    return { area: raw.area, deck: raw.deck.slice(), open: raw.open.slice(), blessings,
+      phase: raw.phase, active, choices: raw.phase === 'blessing' ? raw.choices.slice() : [] };
+  }
+
+  function blessingRank(id) {
+    return mode === 'tactical' ? tacticalRoute?.blessings[id] || 0 : 0;
+  }
+
+  function tacticalTraits() {
+    if (mode !== 'tactical' || tacticalRoute?.phase !== 'stage') return [];
+    const id = tacticalRoute.active;
+    if (id === 'boss') return tacticalBoss().traits;
+    return Object.hasOwn(TACTICAL_ANOMALIES, id) ? [id] : [];
+  }
+
+  function tacticalCard(id) {
+    if (id === 'boss') {
+      const boss = tacticalBoss();
+      return { icon: '⚠', name: boss.name, rule: boss.traits.map(trait => TACTICAL_ANOMALIES[trait].name).join(' ＋ '),
+        reward: '+10 🪙・祝福' };
+    }
+    if (Object.hasOwn(TACTICAL_ANOMALIES, id)) return { ...TACTICAL_ANOMALIES[id], reward: '+6 🪙' };
+    if (id === 'shop') return { icon: '◈', name: '量子ショップ', rule: 'レリック・ツール・補給を購入。', reward: '購入・リロール' };
+    if (id === 'supply') return { icon: '⚡', name: 'パルス補給', rule: '残弾を回復するか、最大残弾を増やす。', reward: '残弾 +5 ／ 上限 +2' };
+    if (id === 'lab') return { icon: '⚗', name: '量子ラボ', rule: '残弾を使ってレアを得るか、控えを売却。', reward: 'レア ／ +6 🪙' };
+    return { icon: '▦', name: '通常盤面', rule: '標準6×6。すべての原子を電離させる。', reward: '+3 🪙・+2弾' };
+  }
+
+  function syncTacticalScreen() {
+    const route = mode === 'tactical' ? tacticalRoute : null;
+    const onRoute = !!route && route.phase !== 'stage';
+    document.getElementById('boardChassis').classList.toggle('mirror-boundary', tacticalTraits().includes('mirror'));
+    const panel = document.getElementById('routePanel');
+    panel.hidden = !onRoute;
+    panel.inert = route?.phase === 'shop';
+    for (const id of ['statusStrip', 'boardWrap', 'thumbDeck', 'tacBoardMeta']) {
+      document.getElementById(id).hidden = onRoute || (id === 'tacBoardMeta' && !route);
+    }
+    const sheet = document.getElementById('loadoutSheet');
+    document.getElementById(onRoute ? 'routeTray' : 'loadoutHome').appendChild(sheet);
+    sheet.classList.toggle('open', onRoute);
+    sheet.inert = !onRoute;
+    document.getElementById('btnCloseLoadout').hidden = onRoute;
+    document.getElementById('relicDeck').setAttribute('aria-expanded', String(onRoute));
+    if (onRoute) {
+      renderTacticalRoute();
+      renderLoadout();
+    } else {
+      const card = route ? tacticalCard(route.active) : null;
+      const rules = tacticalTraits().map(id => TACTICAL_ANOMALIES[id].rule);
+      if (card) document.getElementById('tacBoardMeta').textContent =
+        `${card.icon} ${card.name} · ${rules.length ? rules.join(' / ') : card.rule}`;
+      resizeCanvas();
+    }
+  }
+
+  function renderTacticalRoute() {
+    const { area, open, deck, phase, choices, blessings } = tacticalRoute;
+    const header = document.getElementById('routeMeta');
+    header.textContent = `${area <= 3 ? 'AREA ' + area : '深層 ' + (area - 3)} · 残カード ${open.length + deck.length} · BOSS: ${tacticalBoss().name}`;
+    const earned = Object.entries(blessings).map(([id, rank]) => TACTICAL_BLESSINGS[id].name + (rank > 1 ? ` ×${rank}` : ''));
+    document.getElementById('routeBlessings').textContent = earned.length ? '祝福 · ' + earned.join(' / ') : '';
+    document.getElementById('routeBlessings').hidden = !earned.length;
+    const list = document.getElementById('routeActions');
+    list.innerHTML = '';
+    function action(icon, name, rule, reward, run, disabled = false) {
+      const button = document.createElement('button');
+      button.type = 'button';
+      button.className = 'route-card';
+      button.disabled = disabled;
+      button.innerHTML = `<span aria-hidden="true" class="route-icon">${icon}</span>
+        <span class="route-copy"><strong>${name}</strong><span>${rule}</span></span>
+        <span class="route-reward">${reward}</span>`;
+      button.onclick = run;
+      list.appendChild(button);
+    }
+    if (phase === 'cards') {
+      for (const id of open.length ? open : ['boss']) {
+        const { icon, name, rule, reward } = tacticalCard(id);
+        action(icon, name, rule, reward, () => selectTacticalCard(id));
+      }
+    } else if (phase === 'supply') {
+      action('⚡', 'パルス回復', '最大残弾まで回復する。', '+5弾', () => resolveTacticalEvent('heal'));
+      action('▥', 'マガジン拡張', 'このランの最大残弾を増やす。', '+2枠',
+        () => resolveTacticalEvent('capacity'), state.maxTaps >= MAX_TACTICAL_TAPS);
+    } else if (phase === 'lab') {
+      const rare = labRareAvailable().length;
+      const bench = labBenchRelic();
+      action('⚗', 'レアレリックを取得', rare ? '未取得のレアから1つ取得。' : '未取得のレアがありません。',
+        '−3弾', () => resolveTacticalEvent('rare'), !rare || state.taps < 3);
+      action('◈', '控えを売却', bench ? bench.name + 'を手放す。' : '控えに売却できるレリックがありません。',
+        '+6 🪙', () => resolveTacticalEvent('sell'), !bench);
+      action('↩', '立ち去る', 'このカードを消化して戻る。', '', () => resolveTacticalEvent('leave'));
+    } else if (phase === 'blessing') {
+      for (const id of choices) {
+        const { name, rule } = TACTICAL_BLESSINGS[id];
+        action('✦', name, rule, '祝福', () => chooseTacticalBlessing(id));
+      }
+    }
+  }
+
+  function enterTacticalRoute(focus = true) {
+    state.busy = false;
+    state.tappedThisStage = false;
+    state.stageCleared = false;
+    state.activeTool = null;
+    state.swapFirst = null;
+    syncTacticalScreen();
+    updateUI();
+    saveRunState('route');
+    if (focus) document.getElementById('routeMeta').focus();
+  }
+
+  function selectTacticalCard(id) {
+    if (mode !== 'tactical' || tacticalRoute.phase !== 'cards' || state.runOver) return;
+    const { open, deck } = tacticalRoute;
+    if (id === 'boss' ? open.length || deck.length : !open.includes(id)) return;
+    tacticalRoute.active = id;
+    if (id === 'shop') {
+      tacticalRoute.phase = 'shop';
+      syncTacticalScreen();
+      openShop();
+      document.getElementById('shopExit').focus();
+    } else if (id === 'supply' || id === 'lab') {
+      tacticalRoute.phase = id;
+      enterTacticalRoute();
+    } else {
+      tacticalRoute.phase = 'stage';
+      state.taps = Math.min(state.maxTaps, state.taps + blessingRank('reserve'));
+      startStage(false);
+      canvas.focus();
+      if (!state.taps) onGameOver();
+    }
+  }
+
+  function completeTacticalCard() {
+    const route = tacticalRoute;
+    const index = route.open.indexOf(route.active);
+    if (index !== -1) {
+      route.open.splice(index, 1);
+      if (route.deck.length) route.open.push(route.deck.shift());
+    }
+    route.active = null;
+    route.phase = 'cards';
+    enterTacticalRoute();
+  }
+
+  function labRareAvailable() {
+    return TACTICAL_RELICS.filter(relic => relic.rarity === 'rare' && !curInv().owned.includes(relic.id));
+  }
+
+  function labBenchRelic() {
+    const inv = curInv();
+    return TACTICAL_RELICS.find(relic => inv.owned.includes(relic.id) && !inv.equipped.includes(relic.id));
+  }
+
+  function resolveTacticalEvent(choice) {
+    if (mode !== 'tactical') return;
+    if (tacticalRoute.phase === 'supply') {
+      if (choice === 'heal') state.taps = Math.min(state.maxTaps, state.taps + 5);
+      else if (choice === 'capacity' && state.maxTaps < MAX_TACTICAL_TAPS) state.maxTaps = Math.min(MAX_TACTICAL_TAPS, state.maxTaps + 2);
+      else return;
+    } else if (tacticalRoute.phase === 'lab') {
+      if (choice === 'rare') {
+        const available = labRareAvailable();
+        if (state.taps < 3 || !available.length) return;
+        state.taps -= 3;
+        const relic = shuffle(available)[0];
+        acquireRelic(relic);
+      } else if (choice === 'sell') {
+        const relic = labBenchRelic();
+        if (!relic) return;
+        curInv().owned = curInv().owned.filter(id => id !== relic.id);
+        state.coins += 6;
+        showToast(`${relic.name} を売却 +6🪙`, '#ffb020');
+      } else if (choice !== 'leave') return;
+    } else return;
+    completeTacticalCard();
+  }
+
+  function offerTacticalBlessings() {
+    const current = tacticalRoute.blessings;
+    const entries = Object.entries(TACTICAL_BLESSINGS);
+    const newIds = shuffle(entries.filter(([id]) => !current[id]).map(([id]) => id));
+    const repeats = shuffle(entries.filter(([id, value]) => value.repeat && current[id]).map(([id]) => id));
+    tacticalRoute.phase = 'blessing';
+    tacticalRoute.choices = [...newIds, ...repeats].slice(0, 3);
+    enterTacticalRoute();
+  }
+
+  function chooseTacticalBlessing(id) {
+    const route = tacticalRoute;
+    if (mode !== 'tactical' || route.phase !== 'blessing' || !route.choices.includes(id)) return;
+    const blessings = { ...route.blessings, [id]: (route.blessings[id] || 0) + 1 };
+    tacticalRoute = newTacticalArea(route.area + 1, blessings);
+    enterTacticalRoute();
+  }
 
   const OVERDRIVE_RELICS = [
     { id: 'wall_reflect', name: 'リフレクト壁', short: '外周反射', role: '反射', roleCls: 'role-reflect', cost: 4, desc: '画面端に当たった電子ビームが1回だけ跳ね返る。' },
@@ -1770,7 +2087,8 @@
   ];
 
   function roleBadgeHtml(kind, item) {
-    if (kind === 'relic' && item.role) return `<span class="role-tag ${item.roleCls || 'role-ctrl'}">${item.role}</span>`;
+    if (kind === 'relic' && item.role) return `<span class="role-tag ${item.roleCls || 'role-ctrl'}">${item.role}</span>` +
+      (item.rarity === 'rare' ? '<span class="role-tag role-ctrl">レア</span>' : '');
     if (kind === 'mutation') return '<span class="role-tag role-mut">変異</span>';
     if (kind === 'tool') return '<span class="role-tag role-tool">ツール</span>';
     if (kind === 'taps') return '<span class="role-tag role-taps">補給</span>';
@@ -1898,6 +2216,7 @@
     bossMod: null,
     tappedThisStage: false,
     busy: false,
+    spentPulseThisTurn: false,
     chainCount: 0,
     maxChainStage: 0,
     maxChainRun: 0,
@@ -1959,6 +2278,7 @@
 
   function resizeCanvas() {
     const wrap = document.getElementById('boardWrap');
+    if (wrap?.hidden) return;
     const w = wrap ? wrap.clientWidth - 20 : window.innerWidth - 30;
     const h = wrap ? wrap.clientHeight - 30 : window.innerHeight - 290;
     let size = Math.floor(Math.min(w, h, 430));
@@ -2090,6 +2410,7 @@
         version: 1,
         mode,
         phase,
+        tacticalRoute: mode === 'tactical' ? tacticalRoute : null,
         stage: state.stage,
         taps: state.taps,
         maxTaps: state.maxTaps,
@@ -2165,16 +2486,18 @@
       const saved = JSON.parse(rawStr);
       if (!saved || saved.version !== 1) { clearRunSave(); return false; }
       if (saved.mode !== 'tactical' && saved.mode !== 'overdrive') { clearRunSave(); return false; }
-      if (saved.phase !== 'stage' && saved.phase !== 'shop') { clearRunSave(); return false; }
+      if (!['stage', 'shop'].includes(saved.phase) && !(saved.mode === 'tactical' && saved.phase === 'route')) { clearRunSave(); return false; }
       const stg = Number(saved.stage);
       const gSz = Number(saved.gridSize);
       const coins = Number(saved.coins);
       const taps = Number(saved.taps);
-      if (!Number.isInteger(stg) || stg < 1 || stg > 999) { clearRunSave(); return false; }
+      if (!Number.isInteger(stg) || stg < 1 || (saved.mode === 'tactical' ? !Number.isSafeInteger(stg) : stg > 999)) { clearRunSave(); return false; }
       if (!Number.isInteger(gSz) || gSz < 6 || gSz > 8) { clearRunSave(); return false; }
       if (!Number.isFinite(coins) || coins < 0 || !Number.isFinite(taps) || taps < 0) { clearRunSave(); return false; }
 
+      const savedRoute = saved.mode === 'tactical' ? restoreTacticalRoute(saved.tacticalRoute, saved.phase) : null;
       mode = saved.mode;
+      tacticalRoute = savedRoute;
       document.body.setAttribute('data-mode', mode);
       document.getElementById('btnTac').className = 'mode-btn ' + (mode === 'tactical' ? 'active-tac' : '');
       document.getElementById('btnOvd').className = 'mode-btn ' + (mode === 'overdrive' ? 'active-ovd' : '');
@@ -2182,7 +2505,8 @@
       state.inv.tactical = sanitizeSavedInv(saved.inv?.tactical, 'tactical');
       state.inv.overdrive = sanitizeSavedInv(saved.inv?.overdrive, 'overdrive');
       state.stage = stg;
-      state.maxTaps = 15;
+      state.maxTaps = mode === 'tactical' && Number.isInteger(saved.maxTaps)
+        ? Math.min(MAX_TACTICAL_TAPS, Math.max(15, saved.maxTaps)) : 15;
       state.taps = Math.min(mode === 'tactical' ? state.maxTaps : 15, Math.floor(taps));
       state.coins = Math.floor(coins);
       state.score = Math.max(0, Math.floor(Number(saved.score) || 0));
@@ -2223,7 +2547,10 @@
       }
 
       const validTypes = new Set(['normal', 'cross', 'golden', 'prism']);
-      if (saved.phase === 'stage') {
+      if (saved.phase === 'route') {
+        createEmptyBoard(6);
+        state.stageCleared = false;
+      } else if (saved.phase === 'stage') {
         if (!Array.isArray(saved.grid) || saved.grid.length !== gSz) { clearRunSave(); return false; }
         createEmptyBoard(gSz);
         let atomCount = 0;
@@ -2270,13 +2597,12 @@
           });
         }
         if (shopOffers.length === 0) generateShopOffers();
-        document.getElementById('shopTitle').textContent = `STAGE ${String(state.stage).padStart(2, '0')} CLEAR · SHOP`;
-        document.getElementById('shopSummary').textContent =
-          `クリア報酬 +${state.shopBaseReward}🪙` + (state.shopTapBonus ? ` / 残タップボーナス +${state.shopTapBonus}🪙` : '') + ' · 獲得レリックは控えにも保存され次ステージ前に自由に付け替え可能';
+        updateShopHeading();
         renderShop();
         document.getElementById('shopOverlay').classList.add('open');
       }
 
+      syncTacticalScreen();
       clampKeyboardCell();
       updateUI();
       showToast('💾 前回のランを途中再開しました', '#00e5ff');
@@ -2364,15 +2690,6 @@
           criticals++;
         }
       }
-      if (hasRelic('thaw_wave')) {
-        let thawed = 0;
-        for (let r = 0; r < size && thawed < 2; r++) {
-          for (let c = 0; c < size && thawed < 2; c++) {
-            if (grid[r][c] && grid[r][c].frozen) { grid[r][c].frozen = false; thawed++; }
-          }
-        }
-        if (thawed > 0) triggerRelicProc('thaw_wave');
-      }
       state.wave2Preview = null;
       state.wave2Done = false;
       if (st >= 11) {
@@ -2385,6 +2702,7 @@
           }
         }
       }
+      applyTacticalAnomalies();
     } else {
       const bLv = state.burstLv;
       const isOneTapBoss = !isRefill && state.bossMod && state.bossMod.id === 'onetap';
@@ -2435,11 +2753,84 @@
     }
   }
 
+  function tacticalGap(r, c, size) {
+    if (state.stage % 2 === 0) return r === c || r + c === size - 1;
+    const band = Math.floor(size / 2);
+    return r === band || c === band;
+  }
+
+  function applyTacticalAnomalies() {
+    const traits = tacticalTraits();
+    if (!traits.length) return;
+    const size = state.gridSize;
+
+    if (traits.includes('gap')) {
+      for (let r = 0; r < size; r++) {
+        for (let c = 0; c < size; c++) {
+          if (!tacticalGap(r, c, size)) continue;
+          grid[r][c] = null;
+          bumpers[r][c] = null;
+        }
+      }
+      state.wave2Preview = state.wave2Preview?.filter(({ r, c }) => !tacticalGap(r, c, size)) || null;
+      if (!countRemainingDrops()) grid[0][1] = makeDrop(state.burstLv - 1, state.burstLv);
+    }
+
+    if (traits.includes('mirror')) {
+      const cells = shuffle(grid.flatMap((row, r) => row.flatMap((drop, c) => drop ? [{ r, c }] : [])));
+      const count = Math.min(6, Math.max(0, cells.length - 4));
+      for (const { r, c } of cells.slice(0, count)) {
+        grid[r][c] = null;
+        bumpers[r][c] = (r + c) % 2 === 0 ? '/' : '\\';
+      }
+      for (const { r, c } of cells.slice(count)) grid[r][c].burstLv += 1 + (r + c) % 2;
+    }
+
+    if (traits.includes('armor')) {
+      const row = state.stage % 2 === 0 ? 0 : Math.floor(size / 2);
+      const alignment = row === 0 ? 'LR' : 'UD';
+      for (let c = 0; c < size; c++) {
+        bumpers[row][c] = null;
+        grid[row][c] ??= makeDrop(state.burstLv - 2, state.burstLv);
+        grid[row][c].armor = alignment;
+      }
+    }
+
+    if (traits.includes('freeze')) {
+      const drops = grid.flat().filter(Boolean);
+      const unfrozen = shuffle(drops.filter(drop => !drop.frozen));
+      const toFreeze = Math.max(0, Math.ceil(drops.length / 2) - (drops.length - unfrozen.length));
+      for (const drop of unfrozen.slice(0, toFreeze)) drop.frozen = true;
+    }
+  }
+
+  function settleTacticalAnomalies() {
+    const traits = tacticalTraits();
+    if (traits.includes('cooling')) {
+      for (const drop of grid.flat()) {
+        if (drop?.burstLv - drop?.lv === 1) drop.lv = Math.max(1, drop.lv - 2);
+      }
+    }
+    if (state.spentPulseThisTurn && traits.includes('freeze')) {
+      const drop = grid.flat().find(cell => cell && !cell.frozen);
+      if (drop) drop.frozen = true;
+    }
+  }
+
+  function thawOpeningCells() {
+    if (mode !== 'tactical' || !hasRelic('thaw_wave')) return;
+    const frozen = grid.flat().filter(drop => drop?.frozen).slice(0, 2);
+    for (const drop of frozen) drop.frozen = false;
+    if (frozen.length) triggerRelicProc('thaw_wave');
+  }
+
   let shopTimer = null;
   function startStage(newRun = false) {
     clearTimeout(shopTimer);
     if (newRun) {
       state.stage = 1;
+      state.maxTaps = 15;
+      tacticalRoute = mode === 'tactical' ? newTacticalArea() : null;
       state.coins = 4;
       state.runScore = 0;
       state.maxChainRun = 0;
@@ -2491,10 +2882,16 @@
       if (newRun) state.taps = 10;
     }
 
+    if (newRun && mode === 'tactical') {
+      createEmptyBoard(6);
+      enterTacticalRoute(false);
+      return;
+    }
     populateGrid(false);
+    syncTacticalScreen();
     clampKeyboardCell();
     updateUI();
-    if (!newRun && shouldAutosaveStage()) saveRunState('stage');
+    if (!newRun && (mode === 'tactical' || shouldAutosaveStage())) saveRunState('stage');
   }
 
   window.restartRun = function() {
@@ -2544,6 +2941,7 @@
       vy: (dy / mag) * speedBase,
       pierce: !!opts.pierce,
       bouncesLeft: opts.bouncesLeft || 0,
+      rangeLeft: tacticalTraits().includes('damping') ? cellSz * (2 + (r + c) % 2) : Infinity,
       bounced: false,
       lastCell: r + ',' + c,
       color: opts.color || '#00e5ff'
@@ -2584,6 +2982,7 @@
           addFloater(cx, cy - 10, '+1 🪙', '#ffb020', 13);
         }
       }
+      if (state.chainCount === 3 && blessingRank('chain')) state.taps = Math.min(state.maxTaps, state.taps + 1);
       const tacPts = 10 * state.chainCount;
       state.score += tacPts;
       state.runScore += tacPts;
@@ -2657,7 +3056,8 @@
 
     let bounces = 0;
     if (mode === 'overdrive' && hasRelic('wall_reflect')) bounces += 1;
-    if (state.mirrorShieldActive) bounces = Math.max(bounces, 2);
+    if (state.mirrorShieldActive || tacticalTraits().includes('mirror')) bounces = Math.max(bounces, 2);
+    bounces += blessingRank('walls');
 
     const fireWave = (colorOverride) => {
       for (const [dx, dy] of dirs) {
@@ -2686,7 +3086,8 @@
         triggerHitstop(28);
         for (const p of state.wave2Preview) {
           if (!bumpers[p.r][p.c]) {
-            grid[p.r][p.c] = makeDrop(p.lv, state.burstLv, { type: p.type });
+            const boost = tacticalTraits().includes('mirror') ? 1 + (p.r + p.c) % 2 : 0;
+            grid[p.r][p.c] = makeDrop(p.lv, state.burstLv + boost, { type: p.type });
           }
         }
         state.wave2Preview = null;
@@ -2734,7 +3135,7 @@
       spawnParticles(cx, cy, '#bae6fd', 10);
       addFloater(cx, cy, '解凍!', '#00e5ff', 12);
       AudioSys.shatter();
-      return true;
+      if (directTap || !blessingRank('ice')) return true;
     }
 
     if (bounced && mode === 'overdrive' && hasRelic('bounce_charge')) {
@@ -2813,17 +3214,32 @@
       }
     } else {
       if (countRemainingDrops() === 0) { onStageClear(); return; }
+      settleTacticalAnomalies();
       if (state.taps <= 0) { onGameOver(); return; }
     }
     updateUI();
   }
 
   function onStageClear() {
+    if (state.stageCleared || (mode === 'tactical' && tacticalRoute.phase !== 'stage')) return;
     state.stageCleared = true;
-    const baseReward = mode === 'tactical'
-      ? (3 + Math.min(4, Math.floor(state.stage / 3)))
-      : (4 + Math.min(5, Math.floor(state.stage / 3)));
-    const tapBonus = mode === 'overdrive' ? state.taps * 2 : 0;
+    if (mode === 'tactical') {
+      const boss = tacticalRoute.active === 'boss';
+      const normal = !boss && !tacticalTraits().length;
+      const reward = (boss ? 10 : normal ? 3 : 6) + 2 * blessingRank('clear');
+      state.coins += reward;
+      if (normal) state.taps = Math.min(state.maxTaps, state.taps + 2);
+      commitBestRecords();
+      pulseCoin();
+      AudioSys.chime(true);
+      showToast(`ステージクリア +${reward}🪙${normal ? ' · 残弾+2（上限まで）' : ''}`, '#00e58b');
+      state.stage++;
+      if (boss) offerTacticalBlessings();
+      else completeTacticalCard();
+      return;
+    }
+    const baseReward = 4 + Math.min(5, Math.floor(state.stage / 3));
+    const tapBonus = state.taps * 2;
     state.coins += baseReward + tapBonus;
     state.shopBaseReward = baseReward;
     state.shopTapBonus = tapBonus;
@@ -2956,7 +3372,8 @@
   });
   function activateCell(r, c) {
     AudioSys.init();
-    if (state.busy || state.stageCleared || state.runOver) return;
+    if (state.busy || state.stageCleared || state.runOver ||
+        (mode === 'tactical' && tacticalRoute.phase !== 'stage')) return;
     if (r < 0 || r >= state.gridSize || c < 0 || c >= state.gridSize) return;
 
     if (state.activeTool === 'swap') {
@@ -3046,7 +3463,11 @@
   function beginTapSequence(spendTap) {
     const wasUnlocked = !state.tappedThisStage;
     state.tappedThisStage = true;
-    if (wasUnlocked) AudioSys.mechClick('lock');
+    if (wasUnlocked) {
+      AudioSys.mechClick('lock');
+      thawOpeningCells();
+    }
+    state.spentPulseThisTurn = spendTap;
     state.busy = true;
     if (spendTap) state.taps--;
     state.chainCount = 0;
@@ -3096,14 +3517,34 @@
     shopOffers.push({ kind: 'tool', item: t, bought: false });
   }
 
+  function acquireRelic(relic) {
+    const inv = curInv();
+    inv.owned.push(relic.id);
+    if (inv.equipped.length < maxSlots()) {
+      inv.equipped.push(relic.id);
+      showToast(`${relic.name} を即装備しました`, '#00e58b');
+    } else {
+      showToast(`${relic.name} を控えライブラリへ格納`, '#00e5ff');
+    }
+  }
+
+  function updateShopHeading() {
+    const tactical = mode === 'tactical';
+    document.getElementById('shopExit').textContent = tactical ? '立ち去る' : '次のステージへ ▶';
+    document.getElementById('shopTitle').textContent = tactical
+      ? '◈ 量子ショップ' : `STAGE ${String(state.stage).padStart(2, '0')} CLEAR · SHOP`;
+    document.getElementById('shopSummary').textContent = tactical
+      ? (blessingRank('discount') ? `量子優待 ×${blessingRank('discount')} 適用中` : '購入・リロール後も「立ち去る」で進行に戻れます。')
+      : `クリア報酬 +${state.shopBaseReward}🪙` + (state.shopTapBonus ? ` / 残タップボーナス +${state.shopTapBonus}🪙` : '') +
+        ' · 獲得レリックは控えにも保存され次ステージ前に自由に付け替え可能';
+  }
+
   function openShop(baseReward = 0, tapBonus = 0) {
     state.rerollCost = 2;
     state.shopBaseReward = baseReward;
     state.shopTapBonus = tapBonus;
     generateShopOffers();
-    document.getElementById('shopTitle').textContent = `STAGE ${String(state.stage).padStart(2, '0')} CLEAR · SHOP`;
-    document.getElementById('shopSummary').textContent =
-      `クリア報酬 +${baseReward}🪙` + (tapBonus ? ` / 残タップボーナス +${tapBonus}🪙` : '') + ' · 獲得レリックは控えにも保存され次ステージ前に自由に付け替え可能';
+    updateShopHeading();
     renderShop();
     document.getElementById('shopOverlay').classList.add('open');
     saveRunState('shop');
@@ -3119,29 +3560,24 @@
     list.innerHTML = '';
     shopOffers.forEach((o) => {
       const div = document.createElement('div');
+      const price = Math.max(1, Math.round(o.item.cost * 0.8 ** blessingRank('discount')));
       div.className = `card kind-${o.kind}`;
       const iconHtml = o.kind === 'relic'
         ? relicIcon(o.item.id)
         : (o.kind === 'tool' ? o.item.icon : (o.kind === 'mutation' ? '✦' : '+3'));
       div.innerHTML = `<div class="card-icon" style="font-size:13px;font-weight:900;">${iconHtml}</div>
         <div class="card-info"><div class="card-title-row"><span class="card-name">${o.item.name}</span>${roleBadgeHtml(o.kind, o.item)}</div><div class="card-desc">${o.item.desc}</div></div>
-        <button class="btn-amber" ${o.bought || state.coins < o.item.cost ? 'disabled' : ''}>${o.bought ? '済' : o.item.cost + '🪙'}</button>`;
+        <button class="btn-amber" ${o.bought || state.coins < price ? 'disabled' : ''}>${o.bought ? '済' : price + '🪙'}</button>`;
       div.querySelector('button').onclick = () => {
-        if (o.bought || state.coins < o.item.cost) return;
+        if (o.bought || state.coins < price) return;
         if (o.kind === 'tool' && curInv().tools.length >= 3) {
           showToast('ツール枠（最大3枠）がいっぱいです', '#ff2e7e');
           return;
         }
-        state.coins -= o.item.cost;
+        state.coins -= price;
         o.bought = true;
         if (o.kind === 'relic') {
-          curInv().owned.push(o.item.id);
-          if (curInv().equipped.length < maxSlots()) {
-            curInv().equipped.push(o.item.id);
-            showToast(`${o.item.name} を即装備しました`, '#00e58b');
-          } else {
-            showToast(`${o.item.name} を控えライブラリへ格納`, '#00e5ff');
-          }
+          acquireRelic(o.item);
         } else if (o.kind === 'mutation') {
           curInv().mutations[o.item.id]++;
         } else if (o.kind === 'tool') {
@@ -3170,10 +3606,16 @@
   };
 
   window.nextStageFromShop = function() {
+    if (!document.getElementById('shopOverlay').classList.contains('open')) return;
     AudioSys.mechClick('equip');
     closeModal('shopOverlay');
-    state.stage++;
-    startStage(false);
+    if (mode === 'tactical') {
+      if (tacticalRoute.active === 'legacy') state.stage++;
+      completeTacticalCard();
+    } else {
+      state.stage++;
+      startStage(false);
+    }
   };
 
   /* ===== Non-Occluding Half-Sheet Loadout ===== */
@@ -3190,6 +3632,7 @@
     }
   };
   window.closeLoadoutSheet = function() {
+    if (mode === 'tactical' && tacticalRoute && tacticalRoute.phase !== 'stage') return;
     const sheet = document.getElementById('loadoutSheet');
     if (sheet.contains(document.activeElement)) document.getElementById('relicDeck').focus();
     sheet.classList.remove('open');
@@ -3198,7 +3641,7 @@
   };
 
   function renderLoadout() {
-    const canEdit = !state.tappedThisStage && !state.busy;
+    const canEdit = !state.tappedThisStage && !state.busy && !state.runOver;
     const inv = curInv();
     const cat = relicCatalog();
     const sheet = document.getElementById('loadoutSheet');
@@ -3227,7 +3670,10 @@
         inv.equipped = inv.equipped.filter(x => x !== id);
         AudioSys.mechClick('equip');
         renderLoadout(); updateUI();
-        if (shouldAutosaveStage()) saveRunState('stage');
+        if (mode === 'tactical' && tacticalRoute.phase !== 'stage') {
+          if (tacticalRoute.phase === 'lab') renderTacticalRoute();
+          saveRunState('route');
+        } else if (shouldAutosaveStage()) saveRunState('stage');
       };
       eqBox.appendChild(div);
     });
@@ -3247,7 +3693,10 @@
         inv.equipped.push(id);
         AudioSys.mechClick('equip');
         renderLoadout(); updateUI();
-        if (shouldAutosaveStage()) saveRunState('stage');
+        if (mode === 'tactical' && tacticalRoute.phase !== 'stage') {
+          if (tacticalRoute.phase === 'lab') renderTacticalRoute();
+          saveRunState('route');
+        } else if (shouldAutosaveStage()) saveRunState('stage');
       };
       bnBox.appendChild(div);
     });
@@ -3341,13 +3790,16 @@
 
   window.debugSkipStage = function() {
     if (!debugEnabled) return;
+    if (mode === 'tactical' && ['shop', 'blessing'].includes(tacticalRoute.phase)) return;
     closeModal('tuneOverlay');
     state.stage++;
-    startStage(false);
+    if (mode === 'tactical' && tacticalRoute.phase !== 'stage') enterTacticalRoute();
+    else startStage(false);
   };
 
   window.regenCurrentStage = function() {
     if (!debugEnabled) return;
+    if (mode === 'tactical' && tacticalRoute.phase !== 'stage') return;
     closeModal('tuneOverlay');
     startStage(false);
   };
@@ -3384,6 +3836,7 @@
         const filled = i < state.taps;
         magHtml += `<div class="mag-cell${filled ? ' filled' : ''}${filled && state.taps <= 2 ? ' low' : ''}"></div>`;
       }
+      magEl.style.gridTemplateColumns = `repeat(${state.maxTaps}, minmax(0, 1fr))`;
       magEl.innerHTML = magHtml;
 
       const reqChain = hasRelic('chain_tax') ? 2 : 3;
@@ -3607,6 +4060,10 @@
   function loop(ts) {
     const dt = Math.min(0.04, (ts - lastTs) / 1000 || 0.016);
     lastTs = ts;
+    if (mode === 'tactical' && tacticalRoute.phase !== 'stage') {
+      requestAnimationFrame(loop);
+      return;
+    }
 
     if (reducedMotion()) state.hitstop = 0;
     if (state.hitstopCd > 0) state.hitstopCd = Math.max(0, state.hitstopCd - dt);
@@ -3628,8 +4085,12 @@
     const cellSz = boardPx / state.gridSize;
     for (let i = droplets.length - 1; i >= 0; i--) {
       const d = droplets[i];
-      d.x += d.vx * simDt;
-      d.y += d.vy * simDt;
+      const travel = Number.isFinite(d.rangeLeft) ? Math.hypot(d.vx, d.vy) * simDt : 0;
+      const fraction = travel > d.rangeLeft ? d.rangeLeft / travel : 1;
+      d.x += d.vx * simDt * fraction;
+      d.y += d.vy * simDt * fraction;
+      d.rangeLeft -= travel * fraction;
+      const expired = d.rangeLeft <= 0;
 
       let hitEdge = false;
       if (d.x < 4 || d.x > boardPx - 4) {
@@ -3674,7 +4135,7 @@
             x: d.x, y: d.y,
             vx: d.vx * 0.85 - d.vy * 0.4,
             vy: d.vy * 0.85 + d.vx * 0.4,
-            pierce: d.pierce, bouncesLeft: 0, bounced: true, lastCell: '', color: '#ff70ab'
+            pierce: d.pierce, rangeLeft: Infinity, bouncesLeft: 0, bounced: true, lastCell: '', color: '#ff70ab'
           });
         }
       }
@@ -3683,7 +4144,10 @@
       const r = Math.floor(d.y / cellSz);
       if (r < 0 || r >= state.gridSize || c < 0 || c >= state.gridSize) continue;
       const key = r + ',' + c;
-      if (key === d.lastCell) continue;
+      if (key === d.lastCell) {
+        if (expired) droplets.splice(i, 1);
+        continue;
+      }
 
       if (bumpers[r][c]) {
         d.lastCell = key;
@@ -3695,14 +4159,15 @@
         AudioSys.reflect(true);
         spawnRing(bx, by, '#00e5ff', cellSz * 0.6);
         spawnParticles(bx, by, '#00e5ff', 6);
+        if (expired) droplets.splice(i, 1);
         continue;
       }
 
       if (grid[r][c]) {
         d.lastCell = key;
         hitCell(r, c, d.vx, d.vy, d.bounced, false);
-        if (!d.pierce) droplets.splice(i, 1);
-      }
+        if (!d.pierce || expired) droplets.splice(i, 1);
+      } else if (expired) droplets.splice(i, 1);
     }
 
     // Overdrive Cross Burst (Original 72KB: up to 4 per Wave)
@@ -4266,7 +4731,8 @@
         e.preventDefault(); closeModal('helpOverlay');
       } else if (document.getElementById('tuneOverlay').classList.contains('open')) {
         e.preventDefault(); closeModal('tuneOverlay');
-      } else if (document.getElementById('loadoutSheet').classList.contains('open')) {
+      } else if (document.getElementById('loadoutSheet').classList.contains('open') &&
+          (mode !== 'tactical' || tacticalRoute.phase === 'stage')) {
         e.preventDefault(); closeLoadoutSheet();
       }
     });
