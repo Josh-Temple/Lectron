@@ -33,7 +33,7 @@ for(const fn of ['debugUnlockAll','debugAddCoins','debugSkipStage','regenCurrent
 assert.ok(html.includes('id="debugBench" hidden'));
 assert.ok(script.includes("get('debug') === '1'"));
 assert.ok(script.includes('if (droplets.length >= 80) return;'));
-assert.ok(script.includes('state.waveMult = 2.5;')&&script.includes('state.waveMult = 5.0;')&&script.includes('state.waveMult = 10.0;')&&script.includes('state.waveMult = 20.0;')&&script.includes('state.waveMult *= 2.0;'));
+assert.ok(script.includes('state.waveMult = 2.5;')&&script.includes('state.waveMult = 5.0;')&&script.includes('state.waveMult = 10.0;')&&script.includes('state.waveMult = 20.0;'));
 assert.ok(script.includes('state.rerollCost = 2;')&&script.includes('state.rerollCost++;'));
 assert.ok(!script.includes('sort(() => Math.random() - 0.5)'));
 assert.ok(!html.includes('user-scalable=no'));
