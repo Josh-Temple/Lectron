@@ -2,7 +2,7 @@
 const assert=require('node:assert/strict'),fs=require('node:fs'),path=require('node:path');
 const html=fs.readFileSync(path.join(__dirname,'..','index.html'),'utf8');
 const script=html.match(/<script>([\s\S]*?)<\/script>/)[1];
-const injected=script.replace('  else boot();\n})();','  else boot();\n  window.test={state,tuning,preferences,records,AudioSys,getGrid:()=>grid,drawBoard,loop,hitCell,burstCell,onGameOver,openShop,spawnDroplet,getDroplets:()=>droplets,triggerEscalationRefill,generateShopOffers,getOffers:()=>shopOffers,getMode:()=>mode,getRoute:()=>tacticalRoute,selectTacticalCard,resolveTacticalEvent,chooseTacticalBlessing,onStageClear,finishTurn,makeDrop,createEmptyBoard,getBumpers:()=>bumpers,activateCell,applyTacticalAnomalies,saveRunState,startStage,stepChain,playbackTempo,rollOverdriveRelics,shopPrice,OVERDRIVE_RELICS,overdriveAssistRate,overdriveRefillInc,overdriveHazards,MAX_OVERDRIVE_REFILLS};\n})();');
+const injected=script.replace('  else boot();\n})();','  else boot();\n  window.test={state,tuning,preferences,records,AudioSys,getGrid:()=>grid,drawBoard,loop,hitCell,burstCell,onGameOver,openShop,spawnDroplet,getDroplets:()=>droplets,triggerEscalationRefill,generateShopOffers,getOffers:()=>shopOffers,getMode:()=>mode,getRoute:()=>tacticalRoute,selectTacticalCard,resolveTacticalEvent,chooseTacticalBlessing,onStageClear,finishTurn,makeDrop,createEmptyBoard,getBumpers:()=>bumpers,activateCell,applyTacticalAnomalies,saveRunState,startStage,stepChain,playbackTempo,rollOverdriveRelics,shopPrice,OVERDRIVE_RELICS,overdriveAssistRate,overdriveRefillInc,overdriveHazards,MAX_OVERDRIVE_REFILLS,upgradePrice,prob,onBeamReflection,splitOnHit};\n})();');
 assert.ok(injected!==script);
 function launch({search='',saved=new Map(),blocked=false,reduced=false,rng=()=>0.5}={}){
   const byId=new Map();let document,clip='';
@@ -359,29 +359,29 @@ lowGold.el('shopItems').children[0].querySelector('button').click();
 lowGold.w.nextStageFromShop();
 assert.equal(lowGold.t.state.coins, 3);
 
-const market = overdrive(['black_market'], () => 0.1);
+const market = overdrive(['black_market'], () => 0.02);
 market.t.openShop();
 const marketCatalog = market.t.OVERDRIVE_RELICS;
 const marketOffers = market.t.getOffers();
 const mythic = marketOffers.find(o => o.item.rarity === 'mythic');
 assert.ok(mythic);
 assert.equal(marketOffers.filter(o => o.item.rarity === 'mythic').length, 1);
-assert.ok(market.el('shopItems').children[2].innerHTML.includes('MYTHIC'));
-assert.ok(market.el('shopItems').children[2].className.includes('rarity-mythic'));
+assert.ok(market.el('shopItems').children[marketOffers.indexOf(mythic)].innerHTML.includes('MYTHIC'));
+assert.ok(market.el('shopItems').children[marketOffers.indexOf(mythic)].className.includes('rarity-mythic'));
 assert.equal(market.t.shopPrice(mythic), Math.ceil(mythic.item.cost * 1.25));
 assert.equal(market.t.shopPrice(marketOffers.at(-1)), 4);
 const marketRestored = launch({ saved: market.saved });
 assert.deepEqual(marketRestored.t.getOffers().map(marketRestored.t.shopPrice), marketOffers.map(market.t.shopPrice));
 const ordinaryCatalog = overdrive().t;
-assert.equal(marketCatalog.length, 23);
+assert.equal(marketCatalog.length, 36);
 for (const item of marketCatalog) {
-  const [min,max] = {common:[4,6],rare:[10,14],mythic:[22,30]}[item.rarity || 'common'];
+  const [min,max] = {common:[5,8],rare:[18,28],epic:[50,75],mythic:[120,200]}[item.rarity];
   assert.ok(item.cost >= min && item.cost <= max && item.role);
 }
-for (const [roll, expected] of [[0.07,true],[0.08,false],[0.1,false]]) {
+for (const [roll, expected] of [[0.011,true],[0.012,false],[0.02,false]]) {
   assert.equal(ordinaryCatalog.rollOverdriveRelics(marketCatalog, () => roll).some(r => r.rarity === 'mythic'), expected);
 }
-assert.equal(market.t.rollOverdriveRelics(marketCatalog, () => 0.16).some(r => r.rarity === 'mythic'), false);
+assert.equal(market.t.rollOverdriveRelics(marketCatalog, () => 0.024).some(r => r.rarity === 'mythic'), false);
 
 const waves = overdrive(['overload_reactor', 'wave_dividend', 'extreme_inflation']);
 const initialRefill = waves.t.state.coins;
@@ -553,3 +553,146 @@ inflation.t.getGrid()[0][0] = inflation.t.makeDrop(1,4);
 inflation.t.burstCell(0,0);
 assert.equal(inflation.t.state.pendingRefill,false,'a clear at the cap cannot enqueue another wave');
 console.log('PASS: cooling final-cell regression and OVERDRIVE scaling, hazard tiers and safety limits');
+
+const storeRun = overdrive(['wall_reflect','bounce_charge','chain_ripple','overload_reactor','saver_wallet','ion_mining']);
+storeRun.t.state.coins = 1000;
+storeRun.t.openShop();
+assert.equal(storeRun.el('upgradeItems').children.length,3);
+assert.equal(storeRun.t.state.odEconomy.pool.length,18);
+const rankBefore = storeRun.t.state.inv.overdrive.equipped.length;
+const upgrade = (run,i) => run.el('upgradeItems').children[i].querySelector('button').click();
+upgrade(storeRun,0);
+upgrade(storeRun,1);
+upgrade(storeRun,2);
+assert.equal(storeRun.t.state.coins,963);
+assert.equal(storeRun.t.state.odEconomy.spent,37);
+assert.deepEqual(['obstacle','output','clock'].map(storeRun.t.upgradePrice),[21,17,26]);
+assert.equal(storeRun.t.prob(0.20),0.20 * 1.10);
+assert.equal(rankBefore,6);
+assert.equal(storeRun.t.state.inv.overdrive.equipped.length,rankBefore);
+assert.doesNotMatch(storeRun.el('shopExit').textContent,/倹約/);
+upgrade(storeRun,1);
+assert.equal(storeRun.t.upgradePrice('output'),29);
+const seen = new Set();
+for(let i=0;i<4;i++){
+  assert.equal(storeRun.t.state.rerollCost,2 ** (i+1));
+  for(const o of storeRun.t.getOffers()) if(o.kind==='relic') seen.add(o.item.id);
+  storeRun.w.rerollShop();
+}
+assert.equal(storeRun.t.state.rerollCost,32);
+assert.ok([...seen].every(id=>storeRun.t.state.odEconomy.pool.includes(id)));
+assert.equal(storeRun.t.state.odEconomy.spent,84);
+const updatedShop = launch({saved:storeRun.saved});
+assert.deepEqual(updatedShop.t.state.odEconomy,storeRun.t.state.odEconomy);
+assert.equal(updatedShop.t.upgradePrice('output'),29);
+assert.equal(updatedShop.t.state.rerollCost,32);
+assert.match(updatedShop.el('upgradeItems').children[1].innerHTML,/29🪙/);
+updatedShop.w.nextStageFromShop();
+updatedShop.t.openShop();
+assert.equal(updatedShop.t.state.rerollCost,2);
+assert.equal(updatedShop.t.state.odEconomy.upgrades.output,2);
+assert.equal(openedShop.el('shopUpgrades').hidden,true);
+
+const upgradeCap = overdrive();
+upgradeCap.t.state.coins = 1e8;
+upgradeCap.t.openShop();
+for (let i = 0; i < 16; i++) upgrade(upgradeCap,0);
+assert.equal(upgradeCap.t.state.odEconomy.upgrades.obstacle,16);
+assert.match(upgradeCap.el('upgradeItems').children[0].innerHTML,/80%[\s\S]*上限/);
+const cappedGold = upgradeCap.t.state.coins;
+upgrade(upgradeCap,0);
+assert.equal(upgradeCap.t.state.coins,cappedGold);
+
+const areaOdds = overdrive();
+assert.ok(!areaOdds.t.rollOverdriveRelics(areaOdds.t.OVERDRIVE_RELICS,()=>0.08).some(r=>r.rarity==='epic'));
+areaOdds.t.state.stage=7;
+assert.ok(areaOdds.t.rollOverdriveRelics(areaOdds.t.OVERDRIVE_RELICS,()=>0.08).some(r=>r.rarity==='epic'));
+
+const fund = overdrive(['risk_fund']);
+fund.t.state.coins=50;
+fund.t.startStage();
+assert.equal(fund.t.state.coins,40);
+assert.equal(fund.t.state.odEconomy.fundPrincipal,10);
+const fundResume = launch({saved:fund.saved});
+assert.equal(fundResume.t.state.odEconomy.fundPrincipal,10);
+assert.equal(fundResume.t.state.coins,40);
+fundResume.t.startStage();
+assert.equal(fundResume.t.state.coins,40);
+fundResume.t.onStageClear();
+assert.equal(fundResume.t.state.coins,64);
+assert.equal(fundResume.t.state.odEconomy.fundPrincipal,0);
+assert.equal(fundResume.t.state.odEconomy.fundReturn,15);
+
+const outputs = overdrive(['gold_compression','glass_accelerator','bankruptcy']);
+outputs.t.state.coins=0;
+outputs.t.state.odEconomy.spent=40;
+outputs.t.state.odEconomy.upgrades.output=2;
+outputs.t.startStage();
+assert.equal(outputs.t.state.taps,3);
+outputs.t.getGrid()[0][0]=outputs.t.makeDrop(1,3,{type:'golden'});
+outputs.t.hitCell(0,0,1,0,false,false,0,0,{bridge:0});
+assert.equal(outputs.t.state.score,660);
+assert.equal(outputs.t.state.coins,1);
+
+const breakRun=overdrive(['zero_break'],()=>0);
+breakRun.t.state.odEconomy.upgrades.obstacle=16;
+breakRun.t.getGrid()[2][2]=breakRun.t.makeDrop(1,4,{frozen:true,armor:'LR'});
+breakRun.t.getGrid()[3][3]=breakRun.t.makeDrop(1,4);
+const breakingBeam={bridge:0};
+breakRun.t.hitCell(2,2,1,0,false,false,0,0,breakingBeam);
+assert.equal(breakingBeam.passedObstacle,true);
+assert.equal(breakRun.t.getGrid()[2][2].frozen,false);
+assert.equal(breakRun.t.getGrid()[2][2].armor,null);
+assert.equal(breakRun.t.getGrid()[2][2].lv,2);
+assert.equal(breakRun.t.getGrid()[3][3].lv,2);
+
+const crusher=overdrive(['armor_crush'],()=>0);
+crusher.t.getGrid()[2][2]=crusher.t.makeDrop(1,4,{armor:'LR'});
+crusher.t.hitCell(2,2,1,0,false,false,0,0,{bridge:0});
+assert.equal(crusher.t.getGrid()[2][2].armor,null);
+assert.equal(crusher.t.getGrid()[2][2].lv,2);
+const jackpot=overdrive(['critical_jackpot'],()=>0);
+jackpot.t.getGrid()[0][0]=jackpot.t.makeDrop(1,5,{frozen:true});
+jackpot.t.activateCell(0,0);
+assert.equal(jackpot.t.getGrid()[0][0],null);
+const midas=overdrive(['midas_beam','electron_split'],()=>0);
+for(let i=0;i<12;i++){
+  midas.t.onBeamReflection();
+  midas.t.splitOnHit(2,2,{vx:1,vy:0,rangeLeft:100});
+}
+assert.equal(midas.t.state.coins,12);
+assert.equal(midas.t.getDroplets().length,16);
+assert.ok(midas.t.getDroplets().every(beam=>beam.rangeLeft<=100));
+
+const bridge=overdrive(['vacuum_bridge']);
+bridge.t.createEmptyBoard(6);
+bridge.t.getGrid()[1][3]=bridge.t.makeDrop(1,5);
+bridge.t.spawnDroplet(1,0,1,0);
+for(let i=0;i<80&&bridge.t.getDroplets().length;i++) bridge.t.stepChain(.016,.016);
+assert.equal(bridge.t.getGrid()[1][3].lv,4);
+
+const chaos=overdrive(['chaos_refill','refill_overdose'],()=>0.21);
+chaos.t.state.wave=3;
+chaos.t.triggerEscalationRefill();
+assert.equal(count(chaos.t,d=>d.frozen||d.armor),0);
+assert.ok(count(chaos.t,d=>d.burstLv-d.lv===1)>=3);
+const inertia=overdrive(['inertia_drive']);
+inertia.t.state.wave=5;
+inertia.t.finishTurn();
+inertia.t.getGrid()[0][0]=inertia.t.makeDrop(1,5);
+inertia.t.activateCell(0,0);
+assert.equal(inertia.t.getGrid()[0][0].lv,4);
+assert.equal(inertia.t.state.inertiaBoost,0);
+
+const coolingMany=scenario('cooling',{reduced:true});
+coolingMany.t.createEmptyBoard(6);
+const coolingGrid=coolingMany.t.getGrid();
+coolingGrid[0][0]=coolingMany.t.makeDrop(3,4);
+coolingGrid[5][5]=coolingMany.t.makeDrop(3,4);
+coolingGrid[4][2]=coolingMany.t.makeDrop(2,4);
+coolingMany.t.finishTurn();
+assert.equal(coolingGrid[0][0].lv,2);
+assert.equal(coolingGrid[5][5].lv,3);
+coolingMany.t.activateCell(0,0);
+assert.equal(coolingGrid[0][0],null,'the cooled cell can ionize while other cells remain');
+console.log('PASS: repeatable upgrades, four rarities, reroll curve, 13 relics, autosave and multi-cell cooling');

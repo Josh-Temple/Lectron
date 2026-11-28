@@ -1172,7 +1172,25 @@
   .role-gold { color: #fbd982; }
   .role-risk { color: #ff9d90; }
   .role-tag.rarity-mythic { color: #efd5ff; border: 1px solid #bc81ff; background: #38204f; }
-  .role-tag.rarity-rare { color: #bcddff; }
+  .role-tag.rarity-common { color: #d3deed; background: #293449; }
+  .card.rarity-common { border-color: #6d7990; }
+  .role-tag.rarity-rare { color: #bcddff; background: #16334a; }
+  .card.rarity-rare { border-color: #5eb2e1; }
+  .role-tag.rarity-epic { color: #ffd7a3; background: #56321b; }
+  .card.rarity-epic { border-color: #e5a15a; background: #271c16; }
+  #shopUpgrades { min-width: 0; border-top: 1px solid var(--hair); padding-top: 8px; }
+  #shopUpgrades .sec-lbl { margin-bottom: 5px; }
+  #shopOverlay .modal { min-width: 0; overscroll-behavior: contain; }
+  #shopOverlay .card { min-width: 0; }
+  #shopItems, #shopUpgrades { flex-shrink: 0; }
+  .shop-actions {
+    display: flex; justify-content: space-between; flex-wrap: wrap; gap: 6px;
+    position: sticky; bottom: -12px; z-index: 1; padding: 6px 0;
+    background: var(--surface);
+  }
+  #shopOverlay .card-name, #shopOverlay .card-desc { overflow-wrap: anywhere; }
+  #shopOverlay .card button { flex-shrink: 0; }
+  .upgrade-card .card-info { padding-inline-start: 2px; }
   .card.rarity-mythic { border-color: #bc81ff; background: #211730; }
   .card-title-row { flex-wrap: wrap; }
   .card-info { min-width: 0; }
@@ -1323,7 +1341,11 @@
     <div id="shopSummary" style="font-size:12px;color:var(--emerald);font-weight:700;line-height:1.45;"></div>
     <div class="mut-bar" id="shopMutBar" hidden></div>
     <div class="card-grid" id="shopItems"></div>
-    <div style="display:flex;gap:8px;justify-content:space-between;margin-top:4px;">
+    <section id="shopUpgrades" aria-labelledby="upgradeTitle" hidden>
+      <div class="sec-lbl" id="upgradeTitle">無限アップグレード · 装備枠不要</div>
+      <div class="card-grid" id="upgradeItems"></div>
+    </section>
+    <div class="shop-actions">
       <button class="btn-ghost" id="btnReroll" onclick="rerollShop()">🎲 リロール (2🪙)</button>
       <button class="btn-primary" id="shopExit" onclick="nextStageFromShop()">次のステージへ ▶</button>
     </div>
@@ -1813,7 +1835,7 @@
     freeze: { icon: '❄', name: '絶対零度の静寂', rule: '初期配置の半数以上が氷殻。タップ終了ごとに1セル再凍結。' },
     armor: { icon: '⬢', name: '重装シェルター', rule: '中央または外周に、向きが揃った方向装甲の壁。' },
     mirror: { icon: '◇', name: '鏡面迷宮', rule: '偏向板が増え、外周4辺で反射。初期耐久+1〜2。' },
-    cooling: { icon: '◈', name: '不安定炉心', rule: 'ターン終了時、臨界のまま残ったセルは残耐久2へ。冷却された最後の1体は直タップで電離。' },
+    cooling: { icon: '◈', name: '不安定炉心', rule: 'ターン終了時、臨界のまま残ったセルは残耐久2へ戻るのは毎ターン最大1体。そのセルは直タップで電離。' },
     gap: { icon: '✚', name: '真空ギャップ', rule: '十字か斜めの空白帯が盤面を分断。ビームは通過する。' },
     damping: { icon: '≋', name: '減衰フィールド', rule: '電離ビームは2〜3マス分の距離で消滅。' }
   };
@@ -2075,30 +2097,83 @@
   }
 
   const OVERDRIVE_RELICS = [
-    { id: 'wall_reflect', name: 'リフレクト壁', short: '外周反射', role: '反射', roleCls: 'role-reflect', cost: 4, desc: '画面端に当たった電子ビームが1回だけ跳ね返る。' },
-    { id: 'bounce_charge', name: '跳弾チャージ', short: '反射+25', role: '反射', roleCls: 'role-reflect', cost: 4, desc: '壁で反射した電子が命中した原子の基礎点+25。' },
-    { id: 'cross_burst', name: 'クロスバースト', short: '交差3×3', role: '連鎖', roleCls: 'role-chain', cost: 5, desc: '電子同士が交差すると周囲3×3の原子が励起+1（1Wave最大4回）。' },
-    { id: 'crit_refill', name: '臨界リフィル', short: '35%臨界湧', role: '連鎖', roleCls: 'role-chain', cost: 5, desc: '全消しリフィル時、35%の確率で最初から臨界状態で湧く。' },
-    { id: 'chain_ripple', name: '連鎖の余波', short: '5連鎖追撃', role: '連鎖', roleCls: 'role-chain', cost: 4, desc: '5連鎖ごとに盤面上で最も耐久が高い原子に1ヒット。' },
-    { id: 'chain_lucky', name: 'チェーンラッキー', short: '25%追加波', role: '連鎖', roleCls: 'role-chain', cost: 5, desc: '電離時、25%の確率で追加の4方向電子をもう1波放つ。' },
-    { id: 'split_bounce', name: 'スプリットバウンス', short: '40%反射分裂', role: '反射', roleCls: 'role-reflect', cost: 6, desc: '壁反射時、40%の確率で電子が2発（斜め追加）に分裂する。' },
-    { id: 'crit_pop', name: 'クリティカルポップ', short: '20%×4.0', role: '倍率', roleCls: 'role-mult', cost: 5, desc: '電離時、20%の確率でその電離スコアが×4.0になる。' },
-    { id: 'last_stand', name: '背水の陣', short: '残1で×2.5', role: '倍率', roleCls: 'role-mult', cost: 5, desc: '残りタップが1以下のとき、すべての獲得スコアが×2.5。' },
-    { id: 'snowball', name: '雪だるま機関', short: '15連鎖+3', role: '倍率', roleCls: 'role-mult', cost: 5, desc: '1タップで15連鎖以上するたび、ラン終了まで基礎点+3。' },
-    { id: 'pulse_cashout', name: '余剰パルス換金', short: '残弾×2G', role: '経済', roleCls: 'role-gold', rarity: 'common', cost: 4, desc: 'クリア時、残パルス1発につき+2 GOLD。' },
-    { id: 'wave_dividend', name: '高Wave配当', short: 'W3 +3G', role: '経済', roleCls: 'role-gold', rarity: 'common', cost: 6, desc: '各ターンでWave 3に到達すると+3 GOLD。' },
-    { id: 'compound_interest', name: '複利モジュール', short: '利子上限10', role: '経済', roleCls: 'role-gold', rarity: 'rare', cost: 12, desc: 'クリア時の利子上限を+5し、最大+10 GOLDにする。' },
-    { id: 'saver_wallet', name: '節約家の財布', short: '倹約+4G', role: '経済', roleCls: 'role-gold', rarity: 'rare', cost: 10, desc: '購入もリロールもせずにショップを出ると、倹約ボーナスが+4 GOLD。' },
-    { id: 'ion_mining', name: '電離マイニング', short: '10電離+1G', role: '経済', roleCls: 'role-gold', rarity: 'rare', cost: 12, desc: '装備中の電離10回ごとに+1 GOLD。進捗は持ち越す。' },
-    { id: 'golden_excitation', name: '黄金の励起', short: '10Gごと×1.5', role: '倍率', roleCls: 'role-mult', rarity: 'mythic', cost: 28, desc: '電離時の所持GOLD 10ごとにスコア倍率を×1.5。' },
-    { id: 'chain_echo', name: '連鎖の残響', short: '30%追加波', role: '連鎖', roleCls: 'role-chain', rarity: 'mythic', cost: 24, desc: '電離時に30%で同じ射出波を追加。1ターン最大8回。' },
-    { id: 'overload_reactor', name: '過負荷リアクター', short: '昇格×1.25', role: '倍率', roleCls: 'role-mult', rarity: 'mythic', cost: 30, desc: '装備中のWave昇格でラン中の基礎倍率×1.25（1ターン最大6回）。' },
-    { id: 'quantum_gambler', name: '量子ギャンブラー', short: '10%×10＋1G', role: '経済', roleCls: 'role-gold', rarity: 'mythic', cost: 22, desc: '電離時に10%でその電離のスコア×10と+1 GOLD。' },
-    { id: 'reflection_singularity', name: '反射シンギュラリティ', short: '反射+1／+0.5', role: '反射', roleCls: 'role-reflect', rarity: 'mythic', cost: 26, desc: '同じビームが反射するたび、命中時の励起力+1、その電離の倍率+0.5。' },
-    { id: 'extreme_inflation', name: '極限インフレ', short: '倍率増分×1.5', role: '過負荷', roleCls: 'role-risk', rarity: 'rare', cost: 14, desc: 'Wave倍率の上昇幅が1.5倍になる代わり、リフィルごとに氷殻セルが4個増える。' },
-    { id: 'one_shot_pulse', name: '一撃必殺パルス', short: '初弾+3／弾−3', role: '過負荷', roleCls: 'role-risk', rarity: 'rare', cost: 10, desc: '初期パルスを3減らし（最低1発）、最初のパルスの励起力を+3。' },
-    { id: 'black_market', name: 'ブラックマーケット', short: '出現×2／価格↑', role: '過負荷', roleCls: 'role-risk', rarity: 'rare', cost: 14, desc: 'ミシック出現率が2倍になる代わり、ショップの全商品が25%値上げ（端数切り上げ）。' }
+    { id: 'wall_reflect', name: 'リフレクト壁', short: '外周反射', role: '反射', roleCls: 'role-reflect', rarity: 'common', cost: 5, desc: '画面端に当たった電子ビームが1回だけ跳ね返る。' },
+    { id: 'bounce_charge', name: '跳弾チャージ', short: '反射+25', role: '反射', roleCls: 'role-reflect', rarity: 'common', cost: 6, desc: '壁で反射した電子が命中した原子の基礎点+25。' },
+    { id: 'cross_burst', name: 'クロスバースト', short: '交差3×3', role: '連鎖', roleCls: 'role-chain', rarity: 'rare', cost: 22, desc: '電子同士が交差すると周囲3×3の原子が励起+1（1Wave最大4回）。' },
+    { id: 'crit_refill', name: '臨界リフィル', short: '35%臨界湧', role: '連鎖', roleCls: 'role-chain', rarity: 'rare', cost: 24, desc: '全消しリフィル時、35%の確率で最初から臨界状態で湧く。' },
+    { id: 'chain_ripple', name: '連鎖の余波', short: '5連鎖追撃', role: '連鎖', roleCls: 'role-chain', rarity: 'common', cost: 7, desc: '5連鎖ごとに盤面上で最も耐久が高い原子に1ヒット。' },
+    { id: 'chain_lucky', name: 'チェーンラッキー', short: '25%追加波', role: '連鎖', roleCls: 'role-chain', rarity: 'rare', cost: 20, desc: '電離時、25%の確率で追加の4方向電子をもう1波放つ。' },
+    { id: 'split_bounce', name: 'スプリットバウンス', short: '40%反射分裂', role: '反射', roleCls: 'role-reflect', rarity: 'rare', cost: 18, desc: '壁反射時、40%の確率で電子が2発（斜め追加）に分裂する。' },
+    { id: 'crit_pop', name: 'クリティカルポップ', short: '20%×4.0', role: '倍率', roleCls: 'role-mult', rarity: 'epic', cost: 50, desc: '電離時、20%の確率でその電離スコアが×4.0になる。' },
+    { id: 'last_stand', name: '背水の陣', short: '残1で×2.5', role: '倍率', roleCls: 'role-mult', rarity: 'rare', cost: 20, desc: '残りタップが1以下のとき、すべての獲得スコアが×2.5。' },
+    { id: 'snowball', name: '雪だるま機関', short: '15連鎖+3', role: '倍率', roleCls: 'role-mult', rarity: 'epic', cost: 52, desc: '1タップで15連鎖以上するたび、ラン終了まで基礎点+3。' },
+    { id: 'pulse_cashout', name: '余剰パルス換金', short: '残弾×2G', role: '経済', roleCls: 'role-gold', rarity: 'common', cost: 8, desc: 'クリア時、残パルス1発につき+2 GOLD。' },
+    { id: 'wave_dividend', name: '高Wave配当', short: 'W3 +3G', role: '経済', roleCls: 'role-gold', rarity: 'common', cost: 7, desc: '各ターンでWave 3に到達すると+3 GOLD。' },
+    { id: 'compound_interest', name: '複利モジュール', short: '利子上限10', role: '経済', roleCls: 'role-gold', rarity: 'rare', cost: 24, desc: 'クリア時の利子上限を+5し、最大+10 GOLDにする。' },
+    { id: 'saver_wallet', name: '節約家の財布', short: '倹約+4G', role: '経済', roleCls: 'role-gold', rarity: 'rare', cost: 20, desc: '購入もリロールもせずにショップを出ると、倹約ボーナスが+4 GOLD。' },
+    { id: 'ion_mining', name: '電離マイニング', short: '10電離+1G', role: '経済', roleCls: 'role-gold', rarity: 'epic', cost: 55, desc: '装備中の電離10回ごとに+1 GOLD。進捗は持ち越す。' },
+    { id: 'golden_excitation', name: '黄金の励起', short: '10Gごと×1.5', role: '倍率', roleCls: 'role-mult', rarity: 'mythic', cost: 200, desc: '電離時の所持GOLD 10ごとにスコア倍率を×1.5。' },
+    { id: 'chain_echo', name: '連鎖の残響', short: '30%追加波', role: '連鎖', roleCls: 'role-chain', rarity: 'mythic', cost: 135, desc: '電離時に30%で同じ射出波を追加。1ターン最大8回。' },
+    { id: 'overload_reactor', name: '過負荷リアクター', short: '昇格×1.25', role: '倍率', roleCls: 'role-mult', rarity: 'mythic', cost: 175, desc: '装備中のWave昇格でラン中の基礎倍率×1.25（1ターン最大6回）。' },
+    { id: 'quantum_gambler', name: '量子ギャンブラー', short: '10%×10＋1G', role: '経済', roleCls: 'role-gold', rarity: 'epic', cost: 65, desc: '電離時に10%でその電離のスコア×10と+1 GOLD。' },
+    { id: 'reflection_singularity', name: '反射シンギュラリティ', short: '反射+1／+0.5', role: '反射', roleCls: 'role-reflect', rarity: 'mythic', cost: 150, desc: '同じビームが反射するたび、命中時の励起力+1、その電離の倍率+0.5。' },
+    { id: 'extreme_inflation', name: '極限インフレ', short: '倍率増分×1.5', role: '過負荷', roleCls: 'role-risk', rarity: 'epic', cost: 60, desc: 'Wave倍率の上昇幅が1.5倍になる代わり、リフィルごとに氷殻セルが4個増える。' },
+    { id: 'one_shot_pulse', name: '一撃必殺パルス', short: '初弾+3／弾−3', role: '過負荷', roleCls: 'role-risk', rarity: 'rare', cost: 22, desc: '初期パルスを3減らし（最低1発）、最初のパルスの励起力を+3。' },
+    { id: 'black_market', name: 'ブラックマーケット', short: '出現×2／価格↑', role: '過負荷', roleCls: 'role-risk', rarity: 'rare', cost: 28, desc: 'ミシック出現率が2倍になる代わり、ショップの全商品が25%値上げ（端数切り上げ）。' },
+    { id: 'risk_fund', name: 'リスクファンド', short: '投資×1.5', role: '経済', roleCls: 'role-gold', rarity: 'rare', cost: 24, desc: '開幕にGOLDの20%を投資。クリア時に1.5倍で返還。' },
+    { id: 'midas_beam', name: 'ミダスビーム', short: '反射15%+1G', role: '経済', roleCls: 'role-gold', rarity: 'epic', cost: 55, desc: '壁・偏向板で反射するたび15%で+1 GOLD。1ターン最大8 GOLD。' },
+    { id: 'gold_compression', name: '黄金の圧縮', short: '支出20G:+0.5×', role: '経済', roleCls: 'role-gold', rarity: 'epic', cost: 70, desc: '一度装備すると、ショップ累計支出20 GOLDごとに基礎倍率+0.5がラン中続く。' },
+    { id: 'critical_jackpot', name: '臨界ジャックポット', short: '20%即電離', role: '連鎖', roleCls: 'role-chain', rarity: 'rare', cost: 22, desc: '直接タップしたセルが20%で即電離。氷殻・残耐久を無視する。' },
+    { id: 'electron_split', name: '分裂電子', short: '命中15%で2発', role: '連鎖', roleCls: 'role-chain', rarity: 'epic', cost: 62, desc: 'ビーム命中時15%で進路から左右へ2発分裂。1ターン最大8回。' },
+    { id: 'chaos_refill', name: 'カオス・リフィル', short: '25%妨害解除', role: '制御', roleCls: 'role-ctrl', rarity: 'mythic', cost: 145, desc: 'リフィル時25%で盤面上の氷殻・方向装甲をすべて解除する。' },
+    { id: 'armor_crush', name: '装甲粉砕パルス', short: '装甲40%粉砕', role: '貫通', roleCls: 'role-pierce', rarity: 'rare', cost: 18, desc: '方向装甲で遮断されるビームが40%で装甲を壊し、そのまま励起する。' },
+    { id: 'vacuum_bridge', name: '真空ブリッジ', short: '空白ごと+1', role: '貫通', roleCls: 'role-pierce', rarity: 'epic', cost: 65, desc: '同じビームが空白セルへ進入するたび、そのビームの励起力+1。' },
+    { id: 'zero_break', name: '絶対零度ブレイク', short: '解凍で周囲+1', role: '連鎖', roleCls: 'role-chain', rarity: 'epic', cost: 68, desc: '氷殻を割ったとき、周囲8マスへ励起+1の衝撃波。' },
+    { id: 'inertia_drive', name: '慣性ドライブ', short: '前Waveで初手↑', role: '連鎖', roleCls: 'role-chain', rarity: 'rare', cost: 25, desc: '前ターンがWave 3以上なら次のパルスの励起+1、Wave 5以上なら+2。' },
+    { id: 'refill_overdose', name: 'リフィル・オーバードーズ', short: 'W4から臨界3', role: '連鎖', roleCls: 'role-chain', rarity: 'mythic', cost: 165, desc: 'Wave 4以降のリフィルで最大3セルを臨界にする。' },
+    { id: 'bankruptcy', name: '破産契約', short: '0Gで×4', role: '過負荷', roleCls: 'role-risk', rarity: 'epic', cost: 75, desc: '電離直前の所持GOLDが0の間だけ、そのスコア倍率×4。' },
+    { id: 'glass_accelerator', name: 'ガラスの加速器', short: '半弾・ビーム×2', role: '過負荷', roleCls: 'role-risk', rarity: 'mythic', cost: 185, desc: '開幕パルスが半分（切り上げ）。全ビームの励起力2倍、スコア倍率3倍。' },
   ];
+
+  const OVERDRIVE_UPGRADES = {
+    obstacle: { name: '妨害ブレイク確率', cost: 12, cap: 16, effect: rank => `${rank * 5}% · 購入ごとに+5ポイント（最大80%）` },
+    output: { name: 'スコア出力チューン', cost: 10, cap: Infinity, effect: rank => `基礎倍率 +${rank * 25}% · 購入ごとに+25ポイント` },
+    clock: { name: '確率オーバークロック', cost: 15, cap: Infinity, effect: rank => `発動補正 +${rank * 10}% · 購入ごとに+10ポイント` }
+  };
+  const OVERDRIVE_POOL_LIMIT = 18;
+  const MAX_GOLD_PRICE = 1e300;
+
+  function newOverdriveEconomy() {
+    return { upgrades: { obstacle: 0, output: 0, clock: 0 }, spent: 0, pool: null,
+      fundStage: 0, fundPrincipal: 0, fundReturn: 0, compression: false };
+  }
+
+  function upgradePrice(id) {
+    let price = OVERDRIVE_UPGRADES[id].cost;
+    for (let i = 0; i < state.odEconomy.upgrades[id] && price < MAX_GOLD_PRICE; i++) {
+      price = Math.min(MAX_GOLD_PRICE, Math.ceil(price * 17 / 10));
+    }
+    return price;
+  }
+
+  function restoreOverdriveEconomy(raw) {
+    const economy = newOverdriveEconomy();
+    const validGold = value => Number.isFinite(value) ? Math.max(0, Math.min(MAX_GOLD_PRICE, Math.floor(value))) : 0;
+    for (const [id, item] of Object.entries(OVERDRIVE_UPGRADES)) {
+      const rank = raw?.upgrades?.[id];
+      if (Number.isSafeInteger(rank) && rank > 0) economy.upgrades[id] = Math.min(item.cap, rank);
+    }
+    economy.spent = validGold(raw?.spent);
+    economy.fundStage = raw?.fundStage === state.stage ? state.stage : 0;
+    economy.fundPrincipal = economy.fundStage ? validGold(raw?.fundPrincipal) : 0;
+    economy.fundReturn = validGold(raw?.fundReturn);
+    economy.compression = raw?.compression === true;
+    if (Array.isArray(raw?.pool)) {
+      const valid = new Set(OVERDRIVE_RELICS.map(relic => relic.id));
+      economy.pool = [...new Set(raw.pool.filter(id => valid.has(id)))].slice(0, OVERDRIVE_POOL_LIMIT);
+    }
+    return economy;
+  }
 
   const MUTATIONS = [
     { id: 'cross', name: 'クロス変異', cost: 4, desc: '次ステージ以降、斜め4方向オービタル原子の出現率が+12%。' },
@@ -2120,7 +2195,7 @@
 
   function roleBadgeHtml(kind, item) {
     if (kind === 'relic' && item.role) {
-      const rarity = item.rarity === 'mythic' ? 'MYTHIC' : item.rarity === 'rare' ? 'RARE' : '';
+      const rarity = item.rarity?.toUpperCase();
       return `<span class="role-tag ${item.roleCls || 'role-ctrl'}">${item.role}</span>` +
         (rarity ? `<span class="role-tag rarity-${item.rarity}">${rarity}</span>` : '');
     }
@@ -2266,6 +2341,10 @@
     activeTool: null, // 'swap' | 'blast' | 'phase_shift' | 'push_one'
     swapFirst: null,
     rerollCost: 2,
+    odEconomy: newOverdriveEconomy(),
+    midasGold: 0,
+    beamSplits: 0,
+    inertiaBoost: 0,
     shopBaseReward: 0,
     shopTapBonus: 0,
     shopInterest: 0,
@@ -2340,7 +2419,10 @@
   function relicCatalog() { return mode === 'tactical' ? TACTICAL_RELICS : OVERDRIVE_RELICS; }
   function maxSlots() { return mode === 'tactical' ? tuning.tacSlots : tuning.odSlots; }
   function hasRelic(id) { return curInv().equipped.includes(id); }
-  function prob(base) { return Math.min(0.95, base * tuning.probMult); }
+  function prob(base) {
+    const clock = mode === 'overdrive' ? state.odEconomy.upgrades.clock : 0;
+    return Math.min(0.95, base * (tuning.probMult + clock * 0.10));
+  }
 
   function triggerHitstop(ms = 28) {
     if (reducedMotion() || state.hitstopCd > 0) return;
@@ -2469,6 +2551,10 @@
         burstLv: state.burstLv,
         snowballBonus: state.snowballBonus,
         rerollCost: state.rerollCost,
+        odEconomy: mode === 'overdrive' ? {
+          ...state.odEconomy,
+          prices: Object.fromEntries(Object.keys(OVERDRIVE_UPGRADES).map(id => [id, upgradePrice(id)]))
+        } : null,
         shopBaseReward: state.shopBaseReward,
         shopTapBonus: state.shopTapBonus,
         shopInterest: state.shopInterest,
@@ -2568,7 +2654,12 @@
       state.wave = Math.max(1, Math.floor(Number(saved.wave) || 1));
       state.waveMult = Math.max(1, Number(saved.waveMult) || 1.0);
       state.snowballBonus = Math.max(0, Math.floor(Number(saved.snowballBonus) || 0));
-      state.rerollCost = Math.max(2, Math.floor(Number(saved.rerollCost) || 2));
+      state.rerollCost = Math.max(2, Math.min(MAX_GOLD_PRICE, Math.floor(Number(saved.rerollCost) || 2)));
+      state.odEconomy = restoreOverdriveEconomy(saved.odEconomy);
+      if (mode === 'overdrive' && saved.phase === 'shop' && !saved.odEconomy) {
+        state.rerollCost = 2 ** Math.min(996, state.rerollCost - 1);
+      }
+      state.inertiaBoost = 0;
       state.shopBaseReward = Math.max(0, Math.floor(Number(saved.shopBaseReward) || 0));
       state.shopTapBonus = Math.max(0, Math.floor(Number(saved.shopTapBonus) || 0));
       state.shopInterest = Math.min(10, sanitizeRecordEntry({ score: saved.shopInterest }).score);
@@ -2653,6 +2744,9 @@
             else if (o.kind === 'taps') item = { id: 'buy_taps', name: '残弾補給 (+3 TAP)', cost: 3, desc: '次のステージへ持ち越すタップ数を+3回復。' };
             if (item) shopOffers.push({ kind: o.kind, item, bought: !!o.bought });
           });
+        }
+        if (mode === 'overdrive' && !state.odEconomy.pool) {
+          initializeOverdrivePool(shopOffers.filter(offer => offer.kind === 'relic').map(offer => offer.item.id));
         }
         if (shopOffers.length === 0) generateShopOffers();
         updateShopHeading();
@@ -2838,7 +2932,21 @@
         }
       }
       if (!countRemainingDrops()) grid[Math.floor(size / 2)][Math.floor(size / 2)] = makeDrop(bLv - 1, bLv);
-      if (isRefill) applyRefillObstacles();
+      if (isRefill) {
+        applyRefillObstacles();
+        const drops = grid.flat().filter(Boolean);
+        if (hasRelic('chaos_refill') && Math.random() < prob(0.25)) {
+          for (const drop of drops) {
+            drop.frozen = false;
+            drop.armor = null;
+          }
+          triggerRelicProc('chaos_refill');
+        }
+        if (state.wave >= 4 && hasRelic('refill_overdose')) {
+          for (const drop of shuffle(drops).slice(0, 3)) drop.lv = drop.burstLv - 1;
+          triggerRelicProc('refill_overdose');
+        }
+      }
       if (!isRefill && state.bossMod && state.bossMod.id === 'freeze') {
         let f = 0, tries = 0;
         while (f < 6 && tries++ < 80) {
@@ -2918,14 +3026,12 @@
   function settleTacticalAnomalies() {
     const traits = tacticalTraits();
     if (traits.includes('cooling')) {
-      let cooled = 0;
-      for (const drop of grid.flat()) {
-        if (!drop || drop.burstLv - drop.lv !== 1 || drop.lv <= 1) continue;
+      const drop = grid.flat().find(cell => cell && cell.lv > 1 && cell.burstLv - cell.lv === 1);
+      if (drop) {
         drop.lv--;
         drop.cooled = true;
-        cooled++;
+        flashAnomaly('冷却 1セル · 残1→2');
       }
-      if (cooled) flashAnomaly(`冷却 ${cooled}セル · 残1→2`);
     }
     if (state.spentPulseThisTurn && traits.includes('freeze')) {
       const drop = grid.flat().find(cell => cell && !cell.frozen);
@@ -2970,7 +3076,27 @@
 
   function overdriveStartingTaps() {
     const base = state.bossMod?.id === 'onetap' ? 2 : state.stage >= 10 ? 4 : 5;
-    return Math.max(1, base - (hasRelic('one_shot_pulse') ? 3 : 0));
+    const taps = Math.max(1, base - (hasRelic('one_shot_pulse') ? 3 : 0));
+    return hasRelic('glass_accelerator') ? Math.ceil(taps / 2) : taps;
+  }
+
+  function syncOpeningEconomy() {
+    if (mode !== 'overdrive') return;
+    const economy = state.odEconomy;
+    if (economy.fundStage !== state.stage) {
+      economy.fundStage = state.stage;
+      economy.fundPrincipal = 0;
+      economy.fundReturn = 0;
+    }
+    if (hasRelic('risk_fund') && !economy.fundPrincipal) {
+      economy.fundPrincipal = Math.floor(state.coins / 5);
+      state.coins -= economy.fundPrincipal;
+      if (economy.fundPrincipal) showToast(`リスクファンド 投資 −${economy.fundPrincipal}🪙`, '#ffb020');
+    } else if (!hasRelic('risk_fund') && economy.fundPrincipal) {
+      state.coins += economy.fundPrincipal;
+      economy.fundPrincipal = 0;
+    }
+    if (hasRelic('gold_compression')) economy.compression = true;
   }
 
   let shopTimer = null;
@@ -2986,6 +3112,7 @@
       state.snowballBonus = 0;
       state.miningProgress = 0;
       state.reactorMult = 1;
+      state.odEconomy = newOverdriveEconomy();
       state.runOver = false;
       state.taps = mode === 'tactical' ? 10 : 5;
       state.startBest = { ...records[mode] };
@@ -2996,6 +3123,7 @@
     }
     state.score = 0;
     state.firstPulsePending = true;
+    state.inertiaBoost = 0;
     turboHold = null;
     pointerTap = null;
     state.wave = 1;
@@ -3026,6 +3154,7 @@
       state.bossMod = (state.stage % 3 === 0) ? BOSS_MODS[(Math.floor(state.stage / 3) - 1) % BOSS_MODS.length] : null;
       state.targetScore = calcOverdriveTarget(state.stage);
       state.taps = overdriveStartingTaps();
+      syncOpeningEconomy();
       if (state.bossMod?.id === 'onetap') state.waveMult = 2.0;
     } else {
       state.bossMod = null;
@@ -3099,6 +3228,7 @@
       pierce: !!opts.pierce,
       rangeLeft: tacticalTraits().includes('damping') ? cellSz * (2 + (r + c) % 2) : beamRange(),
       reflections: 0,
+      bridge: 0,
       bouncesLeft: opts.bouncesLeft || 0,
       bounced: false,
       lastCell: r + ',' + c,
@@ -3146,6 +3276,7 @@
       state.runScore += tacPts;
       AudioSys.pop(state.chainCount, directTap, false);
     } else {
+      const bankrupt = state.coins === 0 && hasRelic('bankruptcy');
       let base = 10 + state.snowballBonus + (drop.bonusBase || 0);
       if (drop.type === 'golden') {
         base *= 2;
@@ -3153,7 +3284,12 @@
         pulseCoin();
         addFloater(cx, cy - 16, '+1 🪙', '#ffb020', 13);
       }
-      let mult = (state.waveMult + reflections * 0.5) * state.reactorMult;
+      const economy = state.odEconomy;
+      const compression = economy.compression ? Math.floor(economy.spent / 20) * 0.5 : 0;
+      let mult = (state.waveMult + reflections * 0.5) * state.reactorMult *
+        (1 + economy.upgrades.output * 0.25 + compression);
+      if (bankrupt) mult *= 4;
+      if (hasRelic('glass_accelerator')) mult *= 3;
       if (hasRelic('golden_excitation')) {
         mult *= 1.5 ** Math.floor(state.coins / 10);
         if (state.coins >= 10) triggerRelicProc('golden_excitation');
@@ -3277,16 +3413,34 @@
     }
   }
 
-  function hitCell(r, c, vx, vy, bounced = false, directTap = false, reflections = 0, pulseBoost = 0) {
+  function hitCell(r, c, vx, vy, bounced = false, directTap = false, reflections = 0, pulseBoost = 0, beam = null) {
     const drop = grid[r][c];
     if (!drop) return false;
     const cellSz = boardPx / state.gridSize;
     const cx = (c + 0.5) * cellSz;
     const cy = (r + 0.5) * cellSz;
 
-    if (drop.armor && !directTap) {
-      const horiz = Math.abs(vx) >= Math.abs(vy);
-      if ((drop.armor === 'LR' && horiz) || (drop.armor === 'UD' && !horiz)) {
+    const horiz = Math.abs(vx) >= Math.abs(vy);
+    const armorBlocks = !directTap && ((drop.armor === 'LR' && horiz) || (drop.armor === 'UD' && !horiz));
+    if (mode === 'overdrive' && directTap && hasRelic('critical_jackpot') && Math.random() < prob(0.20)) {
+      triggerRelicProc('critical_jackpot');
+      if (drop.frozen) sendThawShock(r, c);
+      burstCell(r, c, true);
+      return true;
+    }
+    const obstacleBreak = mode === 'overdrive' && beam && (drop.armor || drop.frozen) &&
+      state.odEconomy.upgrades.obstacle > 0 && Math.random() < state.odEconomy.upgrades.obstacle * 0.05;
+    if (obstacleBreak) {
+      beam.passedObstacle = true;
+      drop.armor = null;
+      addFloater(cx, cy, 'BREAK', '#00e5ff', 11);
+    }
+    if (armorBlocks && !obstacleBreak) {
+      if (mode === 'overdrive' && beam && hasRelic('armor_crush') && Math.random() < prob(0.40)) {
+        drop.armor = null;
+        triggerRelicProc('armor_crush');
+        AudioSys.armorBlock(true);
+      } else {
         AudioSys.armorBlock(false);
         spawnParticles(cx, cy, '#b4c6e0', 6);
         addFloater(cx, cy, '🛡', '#cbd5e1', 12);
@@ -3315,7 +3469,8 @@
       spawnParticles(cx, cy, '#bae6fd', 10);
       addFloater(cx, cy, '解凍!', '#00e5ff', 12);
       AudioSys.shatter();
-      if (directTap || !blessingRank('ice')) return true;
+      if (mode === 'overdrive') sendThawShock(r, c);
+      if (!obstacleBreak && (directTap || !blessingRank('ice'))) return true;
     }
 
     if (bounced && mode === 'overdrive' && hasRelic('bounce_charge')) {
@@ -3323,23 +3478,62 @@
       triggerRelicProc('bounce_charge');
     }
 
+    if (grid[r][c] !== drop) return true;
     if (drop.type === 'prism') {
       burstCell(r, c, directTap, reflections);
       return true;
     }
 
-    const finisher = directTap && drop.cooled === true && tacticalTraits().includes('cooling') && countRemainingDrops() === 1;
+    const cooledBonus = directTap && drop.cooled === true && tacticalTraits().includes('cooling');
+    const damage = beam
+      ? (1 + reflections + beam.bridge) * (hasRelic('glass_accelerator') ? 2 : 1)
+      : 1 + reflections + pulseBoost + Number(cooledBonus);
+    exciteCell(r, c, damage, directTap, reflections);
+    return true;
+  }
+
+  function exciteCell(r, c, damage, directTap = false, reflections = 0) {
+    const drop = grid[r][c];
     drop.cooled = false;
-    drop.lv += 1 + reflections + pulseBoost + Number(finisher);
+    drop.lv += damage;
     drop.pulse = 1.0;
     drop.qJump = 1.0;
     if (drop.lv >= drop.burstLv) {
       burstCell(r, c, directTap, reflections);
     } else {
-      AudioSys.excite(Math.max(1, drop.burstLv - drop.lv), directTap);
-      spawnRing(cx, cy, '#ffffff', cellSz * 0.55);
+      const cellSize = boardPx / state.gridSize;
+      AudioSys.excite(drop.burstLv - drop.lv, directTap);
+      spawnRing((c + 0.5) * cellSize, (r + 0.5) * cellSize, '#ffffff', cellSize * 0.55);
     }
-    return true;
+  }
+
+  function sendThawShock(r, c) {
+    if (!hasRelic('zero_break')) return;
+    triggerRelicProc('zero_break');
+    for (let dr = -1; dr <= 1; dr++) {
+      for (let dc = -1; dc <= 1; dc++) {
+        if ((dr || dc) && grid[r + dr]?.[c + dc]) exciteCell(r + dr, c + dc, 1);
+      }
+    }
+  }
+
+  function onBeamReflection() {
+    if (mode === 'overdrive' && hasRelic('midas_beam') && state.midasGold < 8 && Math.random() < prob(0.15)) {
+      state.midasGold++;
+      awardGold('midas_beam', 1);
+    }
+  }
+
+  function splitOnHit(r, c, beam) {
+    if (mode !== 'overdrive' || !hasRelic('electron_split') || state.beamSplits >= 8 ||
+        droplets.length > 78 || beam.rangeLeft <= 0 || Math.random() >= prob(0.15)) return;
+    state.beamSplits++;
+    triggerRelicProc('electron_split');
+    for (const side of [-1, 1]) {
+      spawnDroplet(r, c, beam.vx - side * beam.vy, beam.vy + side * beam.vx, { color: '#ffd7a3' });
+      const child = droplets.at(-1);
+      child.rangeLeft = Math.min(child.rangeLeft, beam.rangeLeft);
+    }
   }
 
   function awardGold(relic, amount) {
@@ -3403,6 +3597,7 @@
     triggerHitstop(32);
     AudioSys.fanfare('wave', state.wave);
     populateGrid(true);
+    for (const beam of droplets) beam.lastCell = '';
     updateUI();
   }
 
@@ -3417,6 +3612,7 @@
         triggerRelicProc('snowball');
         showCutin('⛄ 雪だるま機関 +3基礎点!', '#00e5ff', 900);
       }
+      state.inertiaBoost = hasRelic('inertia_drive') ? state.wave >= 5 ? 2 : state.wave >= 3 ? 1 : 0 : 0;
       if (state.score >= state.targetScore) { onStageClear(); return; }
       if (state.taps <= 0) { onGameOver(); return; }
       if (state.wave > 1) {
@@ -3458,7 +3654,10 @@
     const baseReward = 4 + Math.min(2, Math.floor(state.stage / 3));
     const tapBonus = hasRelic('pulse_cashout') ? state.taps * 2 : 0;
     const interest = Math.min(hasRelic('compound_interest') ? 10 : 5, Math.floor(state.coins / 5));
-    state.coins += baseReward + tapBonus + interest;
+    const economy = state.odEconomy;
+    economy.fundReturn = Math.floor(economy.fundPrincipal * 1.5);
+    economy.fundPrincipal = 0;
+    state.coins += baseReward + tapBonus + interest + economy.fundReturn;
     state.shopBaseReward = baseReward;
     state.shopTapBonus = tapBonus;
     commitBestRecords();
@@ -3696,7 +3895,9 @@
     const boosted = mode === 'overdrive' && state.firstPulsePending && hasRelic('one_shot_pulse');
     state.firstPulsePending = false;
     if (boosted) triggerRelicProc('one_shot_pulse');
-    hitCell(r, c, 0, 0, false, true, 0, boosted ? 3 : 0);
+    const boost = (boosted ? 3 : 0) + state.inertiaBoost;
+    state.inertiaBoost = 0;
+    hitCell(r, c, 0, 0, false, true, 0, boost);
     if (droplets.length === 0 && !state.pendingRefill) {
       finishTurn();
     }
@@ -3707,6 +3908,8 @@
     const wasUnlocked = !state.tappedThisStage;
     state.tappedThisStage = true;
     state.echoCount = 0;
+    state.midasGold = 0;
+    state.beamSplits = 0;
     if (wasUnlocked) {
       AudioSys.mechClick('lock');
       thawOpeningCells();
@@ -3750,18 +3953,37 @@
     return state.shopMarkup ? Math.ceil(offer.item.cost * 1.25) : offer.item.cost;
   }
 
-  function rollOverdriveRelics(catalog, rng = Math.random) {
-    const rares = shuffle(catalog.filter(r => r.rarity === 'rare'), rng);
-    const commons = shuffle(catalog.filter(r => !r.rarity || r.rarity === 'common'), rng);
-    const mythics = catalog.filter(r => r.rarity === 'mythic');
-    const result = [];
-    for (let i = 0; i < 3; i++) {
-      const pool = rng() < 0.25 ? rares : commons;
-      const item = pool.pop() || (pool === rares ? commons : rares).pop();
-      if (item) result.push(item);
+  function initializeOverdrivePool(visible = []) {
+    const economy = state.odEconomy;
+    if (economy.pool) return;
+    const selected = new Set([...curInv().owned, ...visible]);
+    const quotas = { common: 5, rare: 6, epic: 4, mythic: 3 };
+    for (const [tier, quota] of Object.entries(quotas)) {
+      const group = OVERDRIVE_RELICS.filter(relic => relic.rarity === tier);
+      let count = group.filter(relic => selected.has(relic.id)).length;
+      for (const relic of shuffle(group.filter(relic => !selected.has(relic.id)))) {
+        if (count >= quota || selected.size >= OVERDRIVE_POOL_LIMIT) break;
+        selected.add(relic.id);
+        count++;
+      }
     }
-    if (mythics.length && rng() < (state.shopMarkup ? 0.16 : 0.08)) {
-      result[Math.min(result.length, 2)] = mythics[Math.floor(rng() * mythics.length)];
+    economy.pool = [...selected].slice(0, OVERDRIVE_POOL_LIMIT);
+  }
+
+  function rollOverdriveRelics(catalog, rng = Math.random) {
+    const result = [];
+    const buckets = Object.fromEntries(['common', 'rare', 'epic', 'mythic'].map(tier =>
+      [tier, shuffle(catalog.filter(relic => relic.rarity === tier), rng)]));
+    const area = Math.floor((state.stage - 1) / 3) + 1;
+    const mythic = state.shopMarkup ? 0.024 : 0.012;
+    const epic = area >= 3 ? 0.12 : 0.045;
+    for (let i = 0; i < 3; i++) {
+      const roll = rng();
+      const tier = i === 0 && buckets.common.length ? 'common' :
+        roll < mythic && !result.some(relic => relic.rarity === 'mythic') ? 'mythic' : roll < mythic + epic ? 'epic' :
+          roll < mythic + epic + 0.30 ? 'rare' : 'common';
+      const item = buckets[tier].pop() || buckets.common.pop() || buckets.rare.pop();
+      if (item) result.push(item);
     }
     return result;
   }
@@ -3770,7 +3992,9 @@
     shopOffers = [];
     const cat = relicCatalog().filter(r => !curInv().owned.includes(r.id));
     state.shopMarkup = mode === 'overdrive' && hasRelic('black_market');
-    const relics = mode === 'overdrive' ? rollOverdriveRelics(cat) : shuffle(cat).slice(0, 3);
+    if (mode === 'overdrive') initializeOverdrivePool();
+    const relics = mode === 'overdrive' ? rollOverdriveRelics(cat.filter(relic => state.odEconomy.pool.includes(relic.id)))
+      : shuffle(cat).slice(0, 3);
     relics.forEach(r => shopOffers.push({ kind: 'relic', item: r, bought: false }));
 
     if (mode === 'overdrive') {
@@ -3819,12 +4043,53 @@
     saveRunState('shop');
   }
 
+  function spendShopGold(price) {
+    state.coins -= price;
+    state.shopSpent = true;
+    if (mode === 'overdrive') state.odEconomy.spent = Math.min(MAX_GOLD_PRICE, state.odEconomy.spent + price);
+  }
+
+  function renderUpgrades() {
+    const section = document.getElementById('shopUpgrades');
+    section.hidden = mode !== 'overdrive';
+    if (section.hidden) return;
+    const list = document.getElementById('upgradeItems');
+    list.innerHTML = '';
+    for (const [id, item] of Object.entries(OVERDRIVE_UPGRADES)) {
+      const rank = state.odEconomy.upgrades[id];
+      const maxed = rank >= item.cap;
+      const price = shopPrice({ item: { cost: upgradePrice(id) } });
+      const card = document.createElement('div');
+      card.className = 'card upgrade-card';
+      card.innerHTML = `<div class="card-info"><div class="card-title-row"><span class="card-name">${item.name}</span></div>
+        <div class="card-desc">Lv.${rank} · ${item.effect(rank)}</div></div>
+        <button class="btn-amber" aria-label="${item.name} ${maxed ? '上限' : formatGold(price) + ' GOLD'}" ${maxed || state.coins < price ? 'disabled' : ''}>${maxed ? '上限' : formatGold(price) + '🪙'}</button>`;
+      card.querySelector('button').onclick = () => {
+        if (!document.getElementById('shopOverlay').classList.contains('open') ||
+            mode !== 'overdrive' || state.odEconomy.upgrades[id] !== rank || maxed || state.coins < price) return;
+        spendShopGold(price);
+        state.odEconomy.upgrades[id]++;
+        AudioSys.mechClick('buy');
+        renderShop();
+        document.getElementById('upgradeItems').children[Object.keys(OVERDRIVE_UPGRADES).indexOf(id)].querySelector('button').focus();
+        updateUI();
+        saveRunState('shop');
+      };
+      list.appendChild(card);
+    }
+  }
+
+  function formatGold(value) {
+    return value >= 1e7 ? value.toExponential(2) : String(value);
+  }
+
   function renderShop() {
-    document.getElementById('shopCoins').textContent = state.coins;
+    document.getElementById('shopCoins').textContent = formatGold(state.coins);
     if (mode === 'overdrive') {
-      const rewards = [`クリア報酬 +${state.shopBaseReward}🪙`];
+      const rewards = [`クリア報酬 +${state.shopBaseReward}🪙`, `累計支出 ${formatGold(state.odEconomy.spent)}🪙`];
       rewards.push(`利子 +${state.shopInterest}🪙`);
       if (state.shopTapBonus) rewards.push(`残パルス換金 +${state.shopTapBonus}🪙`);
+      if (state.odEconomy.fundReturn) rewards.push(`投資返還 +${formatGold(state.odEconomy.fundReturn)}🪙`);
       if (state.shopMarkup) rewards.push('ブラックマーケット 価格+25%');
       document.getElementById('shopSummary').textContent = rewards.join(' / ');
       const saving = !state.shopSpent ? `（倹約 +${state.shopSavingBonus}🪙）` : '';
@@ -3832,13 +4097,13 @@
     }
     renderMutationStatus();
     const rrBtn = document.getElementById('btnReroll');
-    rrBtn.textContent = `🎲 リロール (${state.rerollCost}🪙)`;
+    rrBtn.textContent = `🎲 リロール (${formatGold(state.rerollCost)}🪙)`;
     rrBtn.disabled = state.coins < state.rerollCost;
     const list = document.getElementById('shopItems');
     list.innerHTML = '';
     shopOffers.forEach((o) => {
       const div = document.createElement('div');
-      div.className = `card kind-${o.kind}` + (o.item.rarity === 'mythic' ? ' rarity-mythic' : '');
+      div.className = `card kind-${o.kind}` + (mode === 'overdrive' && o.item.rarity ? ' rarity-' + o.item.rarity : '');
       const price = shopPrice(o);
       const iconHtml = o.kind === 'relic'
         ? relicIcon(o.item.id)
@@ -3852,8 +4117,7 @@
           showToast('ツール枠（最大3枠）がいっぱいです', '#ff2e7e');
           return;
         }
-        state.coins -= price;
-        state.shopSpent = true;
+        spendShopGold(price);
         o.bought = true;
         if (o.kind === 'relic') {
           acquireRelic(o.item);
@@ -3871,13 +4135,13 @@
       };
       list.appendChild(div);
     });
+    renderUpgrades();
   }
 
   window.rerollShop = function() {
-    if (state.coins < state.rerollCost) return;
-    state.coins -= state.rerollCost;
-    state.rerollCost++;
-    state.shopSpent = true;
+    if (!document.getElementById('shopOverlay').classList.contains('open') || state.coins < state.rerollCost) return;
+    spendShopGold(state.rerollCost);
+    state.rerollCost = mode === 'overdrive' ? Math.min(MAX_GOLD_PRICE, state.rerollCost * 2) : state.rerollCost + 1;
     AudioSys.mechClick('buy');
     generateShopOffers();
     renderShop();
@@ -3926,7 +4190,7 @@
   };
 
   function renderLoadout() {
-    const canEdit = !state.tappedThisStage && !state.busy && !state.runOver;
+    const canEdit = !state.tappedThisStage && !state.busy && !state.runOver && !state.stageCleared;
     const inv = curInv();
     const cat = relicCatalog();
     const sheet = document.getElementById('loadoutSheet');
@@ -3946,14 +4210,15 @@
       const r = cat.find(x => x.id === id);
       if (!r) return;
       const div = document.createElement('div');
-      div.className = 'card equipped' + (r.rarity === 'mythic' ? ' rarity-mythic' : '');
+      div.className = 'card equipped' + (mode === 'overdrive' && r.rarity ? ' rarity-' + r.rarity : '');
       div.innerHTML = `<div class="card-icon">${relicIcon(r.id)}</div>
         <div class="card-info"><div class="card-title-row"><span class="card-name">${r.name}</span>${roleBadgeHtml('relic', r)}</div><div class="card-desc">${r.desc}</div></div>
         <button class="btn-ghost" ${!canEdit ? 'disabled' : ''}>外す</button>`;
       div.querySelector('button').onclick = () => {
         if (!canEdit) return;
         inv.equipped = inv.equipped.filter(x => x !== id);
-        if (id === 'one_shot_pulse') state.taps = overdriveStartingTaps();
+        if (id === 'one_shot_pulse' || id === 'glass_accelerator') state.taps = overdriveStartingTaps();
+        if (id === 'risk_fund' || id === 'gold_compression') syncOpeningEconomy();
         AudioSys.mechClick('equip');
         renderLoadout(); updateUI();
         if (mode === 'tactical' && tacticalRoute.phase !== 'stage') {
@@ -3970,14 +4235,15 @@
       const r = cat.find(x => x.id === id);
       if (!r) return;
       const div = document.createElement('div');
-      div.className = 'card' + (r.rarity === 'mythic' ? ' rarity-mythic' : '');
+      div.className = 'card' + (mode === 'overdrive' && r.rarity ? ' rarity-' + r.rarity : '');
       div.innerHTML = `<div class="card-icon">${relicIcon(r.id)}</div>
         <div class="card-info"><div class="card-title-row"><span class="card-name">${r.name}</span>${roleBadgeHtml('relic', r)}</div><div class="card-desc">${r.desc}</div></div>
         <button class="btn-primary" ${(!canEdit || inv.equipped.length >= maxSlots()) ? 'disabled' : ''}>装備</button>`;
       div.querySelector('button').onclick = () => {
         if (!canEdit || inv.equipped.length >= maxSlots()) return;
         inv.equipped.push(id);
-        if (id === 'one_shot_pulse') state.taps = overdriveStartingTaps();
+        if (id === 'one_shot_pulse' || id === 'glass_accelerator') state.taps = overdriveStartingTaps();
+        if (id === 'risk_fund' || id === 'gold_compression') syncOpeningEconomy();
         AudioSys.mechClick('equip');
         renderLoadout(); updateUI();
         if (mode === 'tactical' && tacticalRoute.phase !== 'stage') {
@@ -4111,7 +4377,7 @@
 
   /* ===== Live HUD Sync ===== */
   function updateLiveHUD() {
-    document.getElementById('valCoins').textContent = state.coins;
+    document.getElementById('valCoins').textContent = mode === 'overdrive' ? formatGold(state.coins) : state.coins;
     if (mode === 'tactical') {
       document.getElementById('valRemCells').textContent = countRemainingDrops();
       const valTaps = document.getElementById('valTapsTac');
@@ -4190,7 +4456,7 @@
       badgeWrap.innerHTML = unlocks.length ? `<span class="tag-chip">${unlocks.join('·')}</span>` : '';
     } else {
       badgeWrap.innerHTML = state.bossMod ? `<span class="tag-chip boss">BOSS: ${state.bossMod.name}</span>` : '';
-      const maxOvdTaps = (state.bossMod && state.bossMod.id === 'onetap') ? 2 : (state.stage >= 10 ? 4 : 5);
+      const maxOvdTaps = overdriveStartingTaps();
       const ovdRow = document.getElementById('ovdTapsRow');
       ovdRow.classList.toggle('onetry-cover', !!(state.bossMod && state.bossMod.id === 'onetap'));
       const pipsEl = document.getElementById('ovdTapPips');
@@ -4373,6 +4639,7 @@
           d.vx = -d.vx;
           d.x = Math.max(5, Math.min(boardPx - 5, d.x));
           d.bounced = true;
+          onBeamReflection();
           if (hasRelic('reflection_singularity')) d.reflections++;
           d.lastCell = '';
           hitEdge = true;
@@ -4391,6 +4658,7 @@
           d.vy = -d.vy;
           d.y = Math.max(5, Math.min(boardPx - 5, d.y));
           d.bounced = true;
+          onBeamReflection();
           if (hasRelic('reflection_singularity')) d.reflections++;
           d.lastCell = '';
           hitEdge = true;
@@ -4405,7 +4673,7 @@
             x: d.x, y: d.y,
             vx: d.vx * 0.85 - d.vy * 0.4,
             vy: d.vy * 0.85 + d.vx * 0.4,
-            pierce: d.pierce, rangeLeft: d.rangeLeft, reflections: d.reflections,
+            pierce: d.pierce, rangeLeft: d.rangeLeft, reflections: d.reflections, bridge: d.bridge,
             bouncesLeft: 0, bounced: true, lastCell: '', color: '#ff70ab'
           });
         }
@@ -4428,8 +4696,8 @@
         else { d.vx = ovy; d.vy = ovx; }
         const bx = (c + 0.5) * cellSz, by = (r + 0.5) * cellSz;
         AudioSys.reflect(true);
+        onBeamReflection();
         if (hasRelic('reflection_singularity')) d.reflections++;
-        if (expired) droplets.splice(i, 1);
         spawnRing(bx, by, '#00e5ff', cellSz * 0.6);
         spawnParticles(bx, by, '#00e5ff', 6);
         if (expired) droplets.splice(i, 1);
@@ -4439,10 +4707,15 @@
       if (grid[r][c]) {
         d.lastCell = key;
         if (d.reflections) triggerRelicProc('reflection_singularity');
-        hitCell(r, c, d.vx, d.vy, d.bounced, false, d.reflections);
-        if (!d.pierce || expired) droplets.splice(i, 1);
+        d.passedObstacle = false;
+        splitOnHit(r, c, d);
+        hitCell(r, c, d.vx, d.vy, d.bounced, false, d.reflections, 0, d);
+        if ((!d.pierce && !d.passedObstacle) || expired) droplets.splice(i, 1);
       } else if (expired) {
         droplets.splice(i, 1);
+      } else if (hasRelic('vacuum_bridge')) {
+        d.lastCell = key;
+        d.bridge++;
       }
     }
 
